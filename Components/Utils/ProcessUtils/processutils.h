@@ -108,7 +108,12 @@ struct PosData {
     QString sigma_az_DMS;
     double sigma_dX = NAN, sigma_dY = NAN, sigma_dZ = NAN;
 
-    double cov_dXYZ[3][3] = {};
+    double cov_dXYZ[3][3] = {}; //epoch by epoch averaging
+
+    double cov_fixed[3][3] = {}; //used for network adjustment
+    double sigma0 = NAN;
+    int dof = 0;
+
 
     QMap<QString, SatelliteData> SatStatsMap;
     struct _InternalAgg {

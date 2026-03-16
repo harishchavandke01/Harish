@@ -38,6 +38,8 @@ struct ProjectBaseline {
 
     QDateTime startTime;
     QString solutionType;
+    double sigma0;
+    double dof;
 };
 
 //loop closure

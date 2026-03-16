@@ -1636,11 +1636,14 @@ void BaselineProcessUI::setProjectContextData()
         bl.dY = pd.roverPosition.ecef.Y - pd.basePosition.ecef.Y;
         bl.dZ = pd.roverPosition.ecef.Z - pd.basePosition.ecef.Z;
 
-        for (int i = 0; i < 3; ++i)
-            for (int j = 0; j < 3; ++j)
-                bl.cov[i][j] = pd.cov_dXYZ[i][j];
-
+        for(int i = 0; i < 3; i++){
+            for(int j = 0; j < 3; j++){
+                bl.cov[i][j] = pd.cov_fixed[i][j];
+            }
+        }
         bl.rms = pd.RMS;
+        bl.sigma0 = pd.sigma0;
+        bl.dof = pd.dof;
         projectContext->baselines.append(bl);
     }
     emit projectContext->baselineReady();
