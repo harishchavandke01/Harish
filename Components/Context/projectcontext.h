@@ -127,14 +127,14 @@ struct NetworkModel
 
 struct AdjustmentResult
 {
-    bool success = false;
+    bool success     = false;
+    bool constrained = true;   // true = constrained, false = free network
+
     QMap<QString, QVector3D> stationCorrections;
     QMap<QString, QVector3D> adjustedECEF;
-    struct Residual
-    {
-        QString base;
-        QString rover;
 
+    struct Residual {
+        QString base, rover;
         double vX, vY, vZ;
         double vNorm;
     };
@@ -142,9 +142,8 @@ struct AdjustmentResult
 
     double sigma0 = NAN;
     double rms3D  = NAN;
-    int dof = 0;
-    bool usedCovariance = true;
-    bool constrained = true;
+    int    dof    = 0;
+    bool   usedCovariance = true;
 };
 
 struct LoopClosure

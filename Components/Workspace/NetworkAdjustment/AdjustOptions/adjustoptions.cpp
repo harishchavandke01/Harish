@@ -1,94 +1,94 @@
 #include "adjustoptions.h"
 #include <QHBoxLayout>
 #include <QVBoxLayout>
-#include <QGroupBox>
-AdjustOptions::AdjustOptions(AdjustmentOptions &opts,QWidget *parent) : QDialog(parent), options(opts)
+#include <QLabel>
+
+AdjustOptions::AdjustOptions(AdjustmentOptions &opts, QWidget *parent)
+    : QDialog(parent)
+    , options(opts)
 {
     setModal(true);
     setWindowFlags(Qt::FramelessWindowHint | Qt::Dialog);
     setAttribute(Qt::WA_StyledBackground, true);
-    setFixedSize(350, 250);
+    setFixedSize(360, 200);
     setObjectName("editOptions");
 
+    // ── Title bar ────────────────────────────────────────────────
     icon = new QLabel();
     icon->setPixmap(QPixmap(":/images/images/surveypod.png"));
-    icon->setFixedSize(20,20);
+    icon->setFixedSize(20, 20);
     icon->setScaledContents(true);
 
-    title = new QLabel("Network adjustment");
+    title = new QLabel("Network Adjustment");
     title->setObjectName("guidetitle");
 
     closeBtn = new QPushButton();
     closeBtn->setIcon(QIcon(":/images/images/cross.svg"));
-    closeBtn->setIconSize(QSize(16,16));
-    closeBtn->setFixedSize(22,22);
+    closeBtn->setIconSize(QSize(16, 16));
+    closeBtn->setFixedSize(22, 22);
     closeBtn->setFlat(true);
     closeBtn->setAutoDefault(false);
     closeBtn->setObjectName("guideclosebtn");
-    closeBtn->setStyleSheet("QPushButton { background-color:white; } QPushButton:hover { background-color: #dddddd; }");
-
-    QHBoxLayout *hlayout = new QHBoxLayout();
-    hlayout->setContentsMargins(5,0,5,0);
-    hlayout->addWidget(icon);
-    hlayout->addWidget(title);
-    hlayout->addStretch();
-    hlayout->addWidget(closeBtn);
-
-    topBar = new QWidget();
-    topBar->setLayout(hlayout);
-    topBar->setObjectName("guideTitleBar");
-    topBar->setStyleSheet("background-color: #404040; border: none;");
-
+    closeBtn->setStyleSheet(
+        "QPushButton { background-color:white; }"
+        "QPushButton:hover { background-color:#dddddd; }");
     connect(closeBtn, &QPushButton::clicked, this, &AdjustOptions::onClose);
 
-    heading = new QLabel("Adjustment Options");
-    heading->setStyleSheet("font-size: 16px; font-weight: bold; border: none;");
+    QHBoxLayout *tbl = new QHBoxLayout();
+    tbl->setContentsMargins(5, 0, 5, 0);
+    tbl->addWidget(icon);
+    tbl->addWidget(title);
+    tbl->addStretch();
+    tbl->addWidget(closeBtn);
 
-    QGroupBox *typeBox = new QGroupBox("Adjustment type");
-    QVBoxLayout *typeLayout = new QVBoxLayout(typeBox);
+    topBar = new QWidget();
+    topBar->setLayout(tbl);
+    topBar->setObjectName("guideTitleBar");
+    topBar->setStyleSheet("background-color:#404040; border:none;");
 
-    constrained = new QRadioButton("Constrained adjustment");
-    free = new QRadioButton("Free network (advanced)");
-    free->setEnabled(false);
+    // ── Content ──────────────────────────────────────────────────
+    heading = new QLabel("Options");
+    heading->setStyleSheet("font-size:16px; font-weight:bold; border:none;");
 
-    constrained->setChecked(options.constrained);
-    free->setChecked(!options.constrained);
+    QLabel *modeNote = new QLabel(
+        "Adjustment mode (constrained / free) is determined automatically "
+        "by whether any control points are selected.");
+    modeNote->setWordWrap(true);
+    modeNote->setStyleSheet("font-size:11px; color:#666; border:none;");
 
-    typeLayout->addWidget(constrained);
-    typeLayout->addWidget(free);
-    free->setChecked(!options.constrained);
-
-    useConv = new CustomCheckBox("Use baseline covariance",options.useCovariance);
+    useConv = new CustomCheckBox("Use baseline covariance matrix", options.useCovariance);
 
     save = new QPushButton("Save");
     save->setObjectName("editOpBtns");
     save->setCursor(Qt::PointingHandCursor);
-    save->setStyleSheet("QPushButton { background-color: #00b894; } QPushButton:hover {background-color: #00d2a8;}");
-
+    save->setStyleSheet(
+        "QPushButton { background-color:#00b894; }"
+        "QPushButton:hover { background-color:#00d2a8; }");
     connect(save, &QPushButton::clicked, this, &AdjustOptions::onSave);
 
-    QWidget * cwid = new QWidget();
-    QVBoxLayout *clay = new QVBoxLayout(cwid);
-    clay->addWidget(typeBox);
-    clay->addWidget(useConv);
-    clay->addWidget(save,0,Qt::AlignRight);
+    QVBoxLayout *contentLay = new QVBoxLayout();
+    contentLay->setContentsMargins(16, 12, 16, 12);
+    contentLay->setSpacing(10);
+    contentLay->addWidget(heading, 0, Qt::AlignHCenter);
+    contentLay->addWidget(modeNote);
+    contentLay->addWidget(useConv);
+    contentLay->addStretch();
+    contentLay->addWidget(save, 0, Qt::AlignRight);
 
-    QVBoxLayout *mainLayout = new QVBoxLayout();
-    mainLayout->setContentsMargins(0,0,0,0);
-    mainLayout->addWidget(topBar,0, Qt::AlignTop);
-    mainLayout->addWidget(heading,0,Qt::AlignHCenter);
-    mainLayout->addWidget(cwid);
-    setLayout(mainLayout);
+    QWidget *contentWidget = new QWidget();
+    contentWidget->setLayout(contentLay);
+
+    QVBoxLayout *mainLay = new QVBoxLayout(this);
+    mainLay->setContentsMargins(0, 0, 0, 0);
+    mainLay->setSpacing(0);
+    mainLay->addWidget(topBar, 0, Qt::AlignTop);
+    mainLay->addWidget(contentWidget, 1);
+    setLayout(mainLay);
 }
 
-void AdjustOptions::onClose()
-{
-    this->close();
-}
-
+void AdjustOptions::onClose()  { close(); }
 void AdjustOptions::onSave()
 {
-    options.constrained = constrained->isChecked();
     options.useCovariance = useConv->isChecked();
     accept();
 }

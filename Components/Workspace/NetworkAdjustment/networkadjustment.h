@@ -9,42 +9,66 @@
 #include <QPushButton>
 #include <QGroupBox>
 #include <QChart>
+#include <QWidget>
+#include <QFrame>
+#include <QSet>
 
 class NetworkAdjustment : public QWidget
 {
     Q_OBJECT
 
-private:
-    ProjectContext *projectContext;
 
 public:
     explicit NetworkAdjustment(ProjectContext *_projectContext,QWidget *parent = nullptr);
 
 signals:
 
-
 private:
-    AdjustmentOptions adjOptions;
-
-    QLabel *heading;
-    QPushButton *runAdjustment;
-    QPushButton *setBases;
-    QPushButton *options;
-    QPushButton *report;
+    ProjectContext    *projectContext;
+    AdjustmentOptions  adjOptions;
 
     QWidget *leftWidget;
-    QWidget *centralWidget;
+    QLabel *heading;
+    QLabel *modeBadge;
+    QLabel *modeDesc;
+
+    QFrame *divider;
+    QPushButton *setControlsBtn;
+    QPushButton *optionsBtn;
+    QPushButton *runBtn;
+    QPushButton *reportBtn;
+
+    QFrame *statsCard;
+    QLabel *statsTitle;
+    QLabel *statType;
+    QLabel *statSigma0;
+    QLabel *statDof;
+    QLabel *statRms;
+    QLabel *statResult;
+
     QChart *chart;
     ChartView *chartView;
 
-    void loadDataFromProjectContext();
-    void drawNetWorkPreview();
+    void buildLeftPanel();
+    void buildStatsCard();
+    void connectSignals();
+
+    int  fixedCount() const;
+    bool isConstrainedMode() const;
+
+    void refreshModeBadge();
+    void refreshButtonStates();
     bool validateNetwork();
-    void buildNetworkModel();
-    bool solveLeastSquares();
+
+    void showStatsCard(bool passed,bool constrained,double sigma0,int dof,double rms3d);
+    void hideStatsCard();
 
 private slots:
-    void onRunAdjustmentClicked();
+    void onSetControlsClicked();
+    void onOptionsClicked();
+    void onRunClicked();
+    void onReportClicked();
+    void onBaselineDataReady();
 
 
 protected:

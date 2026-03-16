@@ -17,7 +17,7 @@ BaselineProcessUI::BaselineProcessUI(ProjectContext * _projectContext, QMainWind
     leftWidget->setObjectName("BaselineLeftWidget");
     QVBoxLayout * llay = new QVBoxLayout(leftWidget);
     llay->setSpacing(8);
-    llay->setAlignment(Qt::AlignLeft);
+    // llay->setAlignment(Qt::AlignCenter);
 
     heading = new QLabel("Baseline Process");
     heading->setObjectName("baselineHeading");
@@ -84,8 +84,8 @@ BaselineProcessUI::BaselineProcessUI(ProjectContext * _projectContext, QMainWind
     mainLayout->addWidget(chartView, 1);
     setCentralWidget(centralWidget);
 
-    rightDock = new QDockWidget("Stations");
-    rightDock->setStyleSheet(R"(QDockWidget {border:1px solid black;background: white;} QDockWidget::title { background: white; border:1px solid black;} )");
+    rightDock = new QDockWidget();
+    rightDock->setStyleSheet(R"(QDockWidget {background: white;} QDockWidget::title { background: white; border:1px solid black;} )");
     rightDock->setMinimumWidth(120);
     rightDock->setFeatures(QDockWidget::DockWidgetClosable);
 

@@ -1,19 +1,20 @@
 #ifndef ADJUSTOPTIONS_H
 #define ADJUSTOPTIONS_H
 
-#include <QWidget>
 #include <QDialog>
+#include <QWidget>
 #include <QLabel>
 #include <QPushButton>
 #include <QRadioButton>
 #include <QGuiApplication>
+#include <QScreen>
 #include <QMouseEvent>
 #include "../../../Utils/customcheckbox.h"
 
 struct AdjustmentOptions
 {
-    bool constrained = true;
-    bool useCovariance = true;
+    bool constrained    = true;   // not used for mode selection (mode is auto)
+    bool useCovariance  = true;
 };
 
 class AdjustOptions : public QDialog
@@ -23,20 +24,16 @@ public:
     explicit AdjustOptions(AdjustmentOptions &opts, QWidget *parent = nullptr);
 
 public:
-    QWidget *topBar;
-    QPoint dragStartPos;
-    bool dragging;
-    QLabel *icon;
-    QLabel *title;
+    QWidget     *topBar;
+    QPoint       dragStartPos;
+    bool         dragging = false;
+    QLabel      *icon;
+    QLabel      *title;
     QPushButton *closeBtn;
 
-    QLabel *heading;
-    QLabel *lb1;
-    QRadioButton *constrained;
-    QRadioButton *free;
-
+    QLabel         *heading;
     CustomCheckBox *useConv;
-    QPushButton *save;
+    QPushButton    *save;
 
 private slots:
     void onClose();
@@ -46,36 +43,22 @@ private:
     AdjustmentOptions &options;
 
 protected:
-    void showEvent(QShowEvent *event) {
+    void showEvent(QShowEvent *event) override {
         QDialog::showEvent(event);
-
-        QRect screenGeometry = QGuiApplication::primaryScreen()->geometry();
-        move(screenGeometry.center() - rect().center());
+        move(QGuiApplication::primaryScreen()->geometry().center() - rect().center());
     }
-
-    void mousePressEvent(QMouseEvent *event) {
+    void mousePressEvent(QMouseEvent *event) override {
         if (event->button() == Qt::LeftButton) {
-            QWidget* child = childAt(event->pos());
-            if (child && (child == topBar || topBar->isAncestorOf(child))) {
-                dragging = true;
-                dragStartPos = event->globalPosition().toPoint() - this->pos();
-            } else {
-                dragging = false;
-            }
+            QWidget *child = childAt(event->pos());
+            dragging = child && (child == topBar || topBar->isAncestorOf(child));
+            if (dragging) dragStartPos = event->globalPosition().toPoint() - pos();
         }
     }
-
-    void mouseMoveEvent(QMouseEvent *event) {
-        if (dragging && (event->buttons() & Qt::LeftButton)) {
+    void mouseMoveEvent(QMouseEvent *event) override {
+        if (dragging && (event->buttons() & Qt::LeftButton))
             move(event->globalPosition().toPoint() - dragStartPos);
-        }
     }
-
-    void mouseReleaseEvent(QMouseEvent *event) {
-        dragging = false;
-    }
-
-signals:
+    void mouseReleaseEvent(QMouseEvent *) override { dragging = false; }
 };
 
 #endif // ADJUSTOPTIONS_H

@@ -2,15 +2,12 @@
 // #define CHARTVIEW_H
 
 // #include <QWidget>
-// #include <QWidget>
 // #include <QtCharts/QChartView>
-// #include <QMouseEvent>
 // #include <QScatterSeries>
 // #include <QLineSeries>
+// #include <QMouseEvent>
 // #include <QTimer>
 // #include <QMap>
-// #include "../../../Utils/utils.h"
-// #include "../../../Utils/ProcessUtils/processutils.h"
 // #include "../../../Context/projectcontext.h"
 
 // QT_BEGIN_NAMESPACE
@@ -19,22 +16,17 @@
 // class QLineSeries;
 // QT_END_NAMESPACE
 
-// struct NetworkEdge{
-//     QString baseKey;
-//     QString roverKey;
-//     double length;
-// };
-
 // class ChartView : public QChartView
 // {
 //     Q_OBJECT
 // public:
-//     explicit ChartView(QChart *chartParam = nullptr, QWidget *parent = nullptr);
+//     explicit ChartView(QChart *chart = nullptr, QWidget *parent = nullptr);
 //     ~ChartView() override;
-//     // void drawGraph(const QMap<QString, PosData>& _posData,QChart* _chart,QScatterSeries* _basesSeries, QScatterSeries* _roversSeries);
-//     void drawGraph(const QMap<QString, PosData>& posData);
-//     void drawStations(const QMap<QString, StationPosition> &stations);
-//     void drawNetwork(const QMap<QString, ProjectStation> &stations, const QVector<ProjectBaseline> &baselines, bool adjusted = false, const QMap<QString, QVector3D> *adjustedCorrections = nullptr );
+//     void drawChart(const QMap<QString, ProjectStation> &stations, const QVector<ProjectBaseline> &baselines);
+
+// public slots:
+//     void highlightStation(const QString &stationId);
+//     void clearHighlight();
 
 // protected:
 //     void wheelEvent(QWheelEvent *event) override;
@@ -44,31 +36,28 @@
 //     void mouseDoubleClickEvent(QMouseEvent *event) override;
 
 // private:
+//     QChart *m_chart = nullptr;
+//     QScatterSeries *m_baseSeries = nullptr;
+//     QScatterSeries *m_roverSeries = nullptr;
+//     QScatterSeries *m_highlightSeries = nullptr;
+
+//     QVector<QLineSeries*> m_baselineSeries;
+
 //     bool m_panning = false;
 //     QPoint m_lastPos;
-
-//     QChart *m_chart = nullptr;
-//     QScatterSeries *m_basesSeries = nullptr;
-//     QScatterSeries *m_roversSeries = nullptr;
-
-//     QList<QLineSeries*> connectionSeries;
-//     QVector<QLineSeries*> arrowSeries;
 //     QTimer *m_tooltipHideTimer = nullptr;
 
-//     QMap<QString, PosData> posData;
-//     QMap<QString, StationPosition> stationPositions;
-//     QMap<QString, QString> roverToBaseMap;
-//     QMap<QString, QStringList> pointToNames;
+//     QMap<QString, ProjectStation> m_stationCache;
+//     QMap<QString, QStringList> m_pointToIds;
 
-//     void updateChart();
-//     void setUpStationPositions();
-//     void drawBaseRoverConnections();
-//     void clearConnections();
-
-//     QVector<NetworkEdge> networkEdges;
+//     QString pointKey(const QPointF &p, int prec = 5) const;
+//     void onPointHovered(const QPointF &pt, bool entered);
+//     void onPointClicked(const QPointF &pt);
+//     void clearChart();
 
 // signals:
 //     void doubleClicked();
+//     void pointClicked(const QStringList &uids);
 // };
 
 // #endif // CHARTVIEW_H
@@ -87,6 +76,7 @@
 #include <QMouseEvent>
 #include <QTimer>
 #include <QMap>
+#include <QVector3D>
 #include "../../../Context/projectcontext.h"
 
 QT_BEGIN_NAMESPACE
@@ -101,13 +91,21 @@ class ChartView : public QChartView
 public:
     explicit ChartView(QChart *chart = nullptr, QWidget *parent = nullptr);
     ~ChartView() override;
+
+    // Draws the baseline-processing network (original positions)
     void drawChart(const QMap<QString, ProjectStation> &stations, const QVector<ProjectBaseline> &baselines);
 
+    // Draws before/after overlay after network adjustment runs.
+    // adjustedECEF maps station uid → adjusted ECEF QVector3D.
+    // If adjustedECEF is empty, falls back to drawChart().
+    void drawChartAdjusted(const QMap<QString, ProjectStation> &stations, const QVector<ProjectBaseline>      &baselines, const QMap<QString, QVector3D>      &adjustedECEF);
+
 public slots:
-    void highlightStation(const QString &stationId);
+    void highlightStation(const QString &uid);
     void clearHighlight();
 
 protected:
+    void drawForeground(QPainter *painter, const QRectF &rect) override;
     void wheelEvent(QWheelEvent *event) override;
     void mousePressEvent(QMouseEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
@@ -115,24 +113,36 @@ protected:
     void mouseDoubleClickEvent(QMouseEvent *event) override;
 
 private:
-    QChart *m_chart = nullptr;
-    QScatterSeries *m_baseSeries = nullptr;
-    QScatterSeries *m_roverSeries = nullptr;
-    QScatterSeries *m_highlightSeries = nullptr;
+    QChart  *m_chart      = nullptr;
+    QScatterSeries  *m_baseSeries = nullptr;   // fixed / base stations  (red)
+    QScatterSeries  *m_roverSeries= nullptr;   // free stations           (blue)
+    QScatterSeries  *m_adjSeries  = nullptr;   // adjusted positions      (green)
+    QScatterSeries  *m_highlightSeries = nullptr;
 
-    QVector<QLineSeries*> m_baselineSeries;
+    QVector<QLineSeries*> m_baselineSeries;    // baseline connections (original)
+    QVector<QLineSeries*> m_adjBaselineSeries; // baseline connections (adjusted)
+    QVector<QLineSeries*> m_correctionVectors; // correction arrows
 
     bool m_panning = false;
     QPoint m_lastPos;
     QTimer *m_tooltipHideTimer = nullptr;
 
     QMap<QString, ProjectStation> m_stationCache;
-    QMap<QString, QStringList> m_pointToIds;
+    QMap<QString, QStringList>    m_pointToIds;
 
     QString pointKey(const QPointF &p, int prec = 5) const;
+
+    void clearChart();
+    void clearAdjustedOverlay();
+
     void onPointHovered(const QPointF &pt, bool entered);
     void onPointClicked(const QPointF &pt);
-    void clearChart();
+
+    // Internal helpers
+    void addBaselineLines(const QMap<QString, ProjectStation> &stations, const QVector<ProjectBaseline>&baselines,
+                          QVector<QLineSeries*> &storage, const QColor &color, qreal width, bool addArrows);
+
+    void fitView(double minX, double maxX, double minY, double maxY);
 
 signals:
     void doubleClicked();
@@ -140,8 +150,3 @@ signals:
 };
 
 #endif // CHARTVIEW_H
-
-
-
-
-

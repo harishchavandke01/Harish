@@ -334,7 +334,7 @@ QPushButton#convertBtn:pressed {
     max-width:200px;
 }
 
-#BaselineLeftWidget #baselineHeading, #networkHeading{
+#baselineHeading, #networkHeading{
     font-weight:bold;
     font-size:22px;
 }
@@ -448,3 +448,74 @@ QPushButton#convertBtn:pressed {
     font-size:12px;
     font-weight:bold;
 }
+
+
+/* ── Network Adjustment ──────────────────────────────────────────── */
+
+#networkModeBadge {
+    border-radius: 4px;
+    padding: 4px 10px;
+    font-weight: bold;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+}
+#networkModeBadge[mode="constrained"] {
+    background-color: #00b894;
+    color: #ffffff;
+}
+#networkModeBadge[mode="free"] {
+    background-color: #e17055;
+    color: #ffffff;
+}
+
+#networkModeDesc {
+    font-size: 11px;
+    color: #888888;
+    border: none;
+}
+
+/* Stats card */
+#networkStatsCard {
+    background-color: #f7f7f7;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    margin-top: 6px;
+}
+
+#networkStatsTitle {
+    font-weight: bold;
+    font-size: 12px;
+    border: none;
+    color: #444444;
+}
+
+#networkStatRow {
+    font-size: 11px;
+    color: #555555;
+    border: none;
+}
+
+#networkStatResult {
+    font-size: 12px;
+    font-weight: bold;
+    border: none;
+    padding: 2px 0;
+}
+#networkStatResult[resultState="passed"] { color: #00b894; }
+#networkStatResult[resultState="failed"] { color: #d63031; }
+
+/* Disabled report button visual */
+#networkLeftWidget #getReport:disabled {
+    background-color: #cccccc;
+    color: #888888;
+}
+#networkLeftWidget #runBtn:disabled {
+    background-color: #cccccc;
+    color: #888888;
+}
+
+/* Hover states for network buttons */
+#networkLeftWidget #runBtn:hover:enabled      { background-color: #00d2a8; }
+#networkLeftWidget #setBases:hover            { background-color: #00d2a8; }
+#networkLeftWidget #options:hover             { background-color: #00d2a8; }
+#networkLeftWidget #getReport:hover:enabled   { background-color: #00d2a8; }
