@@ -1,0 +1,22 @@
+<RCC>
+    <qresource prefix="/styles">
+        <file>styles/styles.qss</file>
+    </qresource>
+    <qresource prefix="/images">
+        <file>images/close.svg</file>
+        <file>images/logo.png</file>
+        <file>images/maximize.svg</file>
+        <file>images/maximize_2.svg</file>
+        <file>images/minimize.svg</file>
+        <file>images/close2.svg</file>
+        <file>images/error.svg</file>
+        <file>images/info.svg</file>
+        <file>images/question.svg</file>
+        <file>images/warning.svg</file>
+        <file>images/surveypod.png</file>
+        <file>images/downArrow.svg</file>
+        <file>images/cross.svg</file>
+        <file>images/link.svg</file>
+        <file>images/optionw.svg</file>
+    </qresource>
+</RCC>

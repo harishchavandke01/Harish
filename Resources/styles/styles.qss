@@ -1,0 +1,450 @@
+QPushButton:focus {
+    outline: none;
+}
+
+/* TitleBar */
+#titleBar {
+    background-color: #404040;
+}
+
+#titleBar QPushButton {
+    background: transparent;
+    color: white;
+    border: none;
+}
+
+#titleBar QPushButton#minimizeButton:hover {
+    background-color: #595959;
+}
+
+#titleBar QPushButton#maximizeButton:hover {
+    background-color: #595959;
+}
+
+#titleBar QPushButton#closeButton:hover {
+    background-color: #ff0000;
+}
+
+
+
+/* The Create project */
+#createProjectBox {
+    background-color: #2b2b2b;
+    border-radius: 10px;
+    border: 1px solid #000000;
+    padding: 10px;
+}
+
+#createProjectTitle {
+    color: #000000;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+#createProjectDescription {
+    color: gray;
+    font-size: 12px;
+}
+
+#createProjectPath {
+    background-color: #f7f7f7;
+    border: 1px solid #c9c9c9;
+    border-radius: 6px;
+    padding: 4px 8px;
+    color: #202020;
+    selection-background-color: #0078d7;
+    selection-color: #ffffff;
+}
+
+#createProjectButton {
+    background-color: #00b894;
+    color: #ffffff;
+    border-radius: 6px;
+    border: none;
+    padding: 6px 14px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+#createProjectButton:hover {
+    background-color: #00d2a8;
+}
+
+#createProjectButton:pressed {
+    background-color: #00a383;
+}
+
+#createProjectButton:disabled {
+    background-color: #555555;
+    color: #aaaaaa;
+}
+
+
+
+
+/* --- MENUBAR --- */
+QMenuBar {
+    background-color: gray;
+    color: #FFFFFF;
+    font-size: 14px;
+    padding:2px;
+}
+
+QMenuBar::item {
+    background: transparent;
+    padding: 6px 10px;
+    margin: 0px 4px;
+    border-radius: 4px;
+}
+
+QMenuBar::item:selected {
+    background: #00a383;
+    color: #FFFFFF;
+}
+
+QMenuBar::item:pressed {
+    background: #00a383;
+    color: #FFFFFF;
+}
+
+/* --- MENUS --- */
+QMenu {
+    background-color: #2C2F33;
+    color: #FFFFFF;
+    border: 1px solid #444;
+    padding: 4px;
+}
+QMenu::item {
+    padding: 6px 20px;
+    background: transparent;
+    color: #FFFFFF;
+}
+QMenu::item:selected {
+    background-color: #00a383;
+    color: #FFFFFF;
+}
+QMenu::separator {
+    height: 1px;
+    background: #555;
+    margin: 4px 2px;
+}
+
+
+/* Message Box */
+#mbTitle {
+    font-size: 14px;
+    font-weight: Bold;
+    color: white;
+}
+
+#okbtn {
+    min-width: 100px;
+    min-height: 30px;
+    background-color:#2b2b2b;
+    border-radius: 15px;
+    color: white;
+    font-size: 14px;
+    font-weight: Bold;
+    border: none;
+}
+
+#yesbtn {
+    min-width: 100px;
+    min-height: 30px;
+    border-radius: 15px;
+    background-color:#2b2b2b;
+    color: white;
+    font-size: 14px;
+    font-weight: Bold;
+    border: none;
+}
+
+#nobtn {
+    min-width: 100px;
+    min-height: 30px;
+    border-radius: 15px;
+    background-color:#00b894;
+    color: white;
+    font-size: 14px;
+    font-weight: Bold;
+    border: none;
+}
+
+
+
+
+/* Rinex conversion left card */
+#rnxFilesInput {
+    background-color: #ffffff;
+    padding: 12px;
+    border: 1px solid #d9d9d9;
+    min-width:400px;
+}
+
+#rnxFilesInput QLabel {
+    color: #333333;
+    font-size: 13px;
+}
+
+#rnxFilesInput QLineEdit {
+    background-color: #f7f7f7;
+    border: 1px solid #c9c9c9;
+    border-radius: 6px;
+    padding: 4px 8px;
+    color: #202020;
+    selection-background-color: #0078d7;
+    selection-color: #ffffff;
+}
+
+#rnxFilesInput QLineEdit:focus {
+    border: 1px solid #0078d7;
+    background-color: #ffffff;
+}
+
+#rnxFilesInput QPushButton#ubxPickBtn,
+#rnxFilesInput QPushButton#outputDirPickBtn {
+    min-width: 32px;
+    max-width: 32px;
+    min-height: 28px;
+    max-height: 28px;
+    border-radius: 6px;
+    background-color: #00b894;
+    border: 1px solid #c9c9c9;
+}
+
+#rnxFilesInput QPushButton#ubxPickBtn:hover,
+#rnxFilesInput QPushButton#outputDirPickBtn:hover {
+    background-color: #00d2a8;
+}
+
+QPushButton#convertBtn, #convertOpBtns, #singleMaskBtn, #editOpBtns, #rawDataCheckInBtns, #srsBtns{
+    background-color: #00b894;
+    color: #ffffff;
+    border-radius: 6px;
+    padding: 6px 14px;
+    border: none;
+    font-weight: bold;
+    font-size:14px;
+}
+
+QPushButton#convertBtn:hover {
+    background-color: #00d2a8;
+}
+
+QPushButton#convertBtn:pressed {
+    background-color: #00a383;
+}
+
+#rnxFilesInput QComboBox{
+    background-color: white;
+    border: 1px solid #c9c9c9;
+    border-radius: 6px;
+    padding: 4px 8px;
+    color: #202020;
+    selection-background-color:#00b894;
+    selection-color: #ffffff;
+}
+
+#rnxFilesInput QComboBox::drop-down {
+    width: 20px;
+    image: url(":/images/images/downArrow.svg");
+    border: none;
+}
+
+#rnxFilesInput QComboBox QAbstractItemView {
+    background-color: #ffffff;
+    border: 1px solid #c9c9c9;
+    outline: 0;
+    selection-background-color: #00b894;
+    selection-color: #ffffff;
+}
+
+/* Rinex conversion Right card  */
+#rnxConvertOptions {
+    background-color: #ffffff;
+    border: 1px solid #d9d9d9;
+}
+
+#dtedit {
+    border: 1px solid #c9c9c9;
+    border-radius: 6px;
+    padding: 4px 8px;
+    color: #202020;
+    selection-background-color:#00b894;
+    outline: 0;
+}
+#dtedit::drop-down {
+    border: none;
+    background: transparent;
+    width: 18px;
+}
+
+#dtedit::down-arrow {
+    image: url(":/images/images/downArrow.svg");
+    width: 15px;
+    height: 15px;
+    background: transparent;
+    border: none;
+}
+
+#rnxConvertOptions QComboBox{
+    background-color: white;
+    border: 1px solid #c9c9c9;
+    border-radius: 6px;
+    padding: 4px 8px;
+    color: #202020;
+    selection-background-color:#00b894;
+    selection-color: #ffffff;
+}
+
+#rnxConvertOptions QComboBox::drop-down {
+    width: 20px;
+    image: url(":/images/images/downArrow.svg");
+    border: none;
+}
+
+#rnxConvertOptions QComboBox QAbstractItemView {
+    background-color: #ffffff;
+    border: 1px solid #c9c9c9;
+    outline: 0;
+    selection-background-color: #00b894;
+    selection-color: #ffffff;
+}
+
+#guideTitleBar {
+    min-height: 30px;
+    max-height: 30px;
+}
+
+#guidetitle{
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+#guideclosebtn{
+    border-radius: 11px;
+    background-color:white;
+    outline:0;
+}
+
+/* baseline processing left widget*/
+#BaselineLeftWidget, #networkLeftWidget{
+    min-width:200px;
+    max-width:200px;
+}
+
+#BaselineLeftWidget #baselineHeading, #networkHeading{
+    font-weight:bold;
+    font-size:22px;
+}
+
+#BaselineLeftWidget #obsFilesPickBtn, #BaselineLeftWidget #reportBtn, #BaselineLeftWidget #processBtn, #BaselineLeftWidget #settingBtn,
+#runBtn, #setBases, #options, #getReport{
+    background-color: #00b894;
+    color: #ffffff;
+    border-radius: 6px;
+    padding: 6px 14px;
+    border: none;
+    min-height:20px;
+    font-weight: bold;
+    font-size:14px;
+}
+#BaselineLeftWidget #obsFilesPickBtn:hover, #BaselineLeftWidget #reportBtn:hover, #BaselineLeftWidget #processBtn:hover, #BaselineLeftWidget #settingBtn:hover {
+    background-color: #00d2a8;
+}
+
+#BaselineLeftWidget #settingBtn{
+    min-width:20px;
+    max-width:20px;
+    min-height:20px;
+    max-height:20px;
+}
+
+
+/* process options */
+
+#processOptions QLineEdit, #editOptions QLineEdit{
+    background-color: white;
+    border: 1px solid #c9c9c9;
+    border-radius: 6px;
+    padding: 4px 8px;
+    color: #202020;
+    selection-background-color: #0078d7;
+    selection-color: #ffffff;
+}
+
+#processOptions QLineEdit:focus, #editOptions QLineEdit:focus {
+    border: 1px solid #0078d7;
+    background-color: #ffffff;
+}
+#processOptions QComboBox, #editOptions QComboBox{
+    background-color: white;
+    border: 1px solid #c9c9c9;
+    border-radius: 6px;
+    padding: 4px 8px;
+    color: #202020;
+    selection-background-color:#00b894;
+    selection-color: #ffffff;
+}
+
+#processOptions QComboBox::drop-down, #editOptions QComboBox::drop-down{
+    width: 20px;
+    image: url(":/images/images/downArrow.svg");
+    border: none;
+}
+
+#processOptions QComboBox QAbstractItemView, #editOptions QComboBox QAbstractItemView {
+    background-color: #ffffff;
+    border: 1px solid #c9c9c9;
+    outline: 0;
+    selection-background-color: #00b894;
+    selection-color: #ffffff;
+}
+
+#processOpBtns{
+    background-color: #00b894;
+    color: #ffffff;
+    border-radius: 6px;
+    padding: 6px 14px;
+    border: none;
+    font-weight: bold;
+    font-size:14px;
+    min-height:17px;
+    margin-top:20px;
+    max-width:80px;
+}
+
+
+/* Custom Progress Bar */
+#pbheading {
+    font-size: 22px;
+    font-weight: bold;
+    border: none;
+}
+
+#pbclosebtn {
+    min-width: 30px;
+    min-height: 30px;
+    font-size: 24px;
+    font-weight: bold;
+    background: transparent;
+    border: none;
+}
+
+#pbcurrentprocess {
+    font-size: 15px;
+}
+
+#pbinfo {
+    font-size: 18px;
+    border: none;
+}
+
+#editOptions, #processOptions, #rawDataCheckIn, #StationReferenceSelection, #timeBasedView{
+    border:2px solid black;
+}
+#editOptions QLabel{
+    font-size:12px;
+    font-weight:bold;
+}
