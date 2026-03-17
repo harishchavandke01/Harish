@@ -203,14 +203,9 @@ void FixStations::populateTable()
         nameItem->setToolTip(key);
         table->setItem(row, COL_STATION, nameItem);
 
-        // auto *fixItem = new QTableWidgetItem();
-        // fixItem->setCheckState(st.isFixed ? Qt::Checked : Qt::Unchecked);
-        // fixItem->setFlags(Qt::ItemIsUserCheckable | Qt::ItemIsEnabled);
-        // fixItem->setTextAlignment(Qt::AlignCenter);
-        // table->setItem(row, COL_FIXED, fixItem);
-
         CustomCheckBox *cb = new CustomCheckBox("", true);
         st.isFixed ? cb->setVal(true) : cb->setVal(false);
+
         QWidget *cellWidget = new QWidget(table);
         QHBoxLayout *lay = new QHBoxLayout(cellWidget);
         lay->setContentsMargins(0, 0, 0, 0);
