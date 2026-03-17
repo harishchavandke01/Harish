@@ -46,7 +46,6 @@ AdjustOptions::AdjustOptions(AdjustmentOptions &opts, QWidget *parent)
     topBar->setObjectName("guideTitleBar");
     topBar->setStyleSheet("background-color:#404040; border:none;");
 
-    // ── Content ──────────────────────────────────────────────────
     heading = new QLabel("Options");
     heading->setStyleSheet("font-size:16px; font-weight:bold; border:none;");
 
