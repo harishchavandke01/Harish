@@ -1,15 +1,15 @@
 #include "networkadjustment.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
-#include <QChart>
 #include <QSpacerItem>
-#include <QQueue>
-#include <QString>
 #include <QPainter>
+#include <QInputDialog>
 #include "../../Utils/custommessagebox.h"
 #include "FixStations/fixstations.h"
+#include "AdjustNetworkDialog/adjustnetworkdialog.h"
+#include "SubnetworkUtils/subnetworkutils.h"
 
-NetworkAdjustment::NetworkAdjustment(ProjectContext *_projectContext, QWidget *parent) : QWidget{parent}, projectContext(_projectContext)
+NetworkAdjustment::NetworkAdjustment(ProjectContext *_projectContext, QWidget *parent) : QWidget(parent), projectContext(_projectContext)
 {
     buildLeftPanel();
     chart = new QChart();
@@ -21,17 +21,16 @@ NetworkAdjustment::NetworkAdjustment(ProjectContext *_projectContext, QWidget *p
     chart->zoom(0.9);
 
     const auto hAxes = chart->axes(Qt::Horizontal);
-    if (!hAxes.isEmpty()) {
-        hAxes.first()->setTitleText("Easting (x)");
-    }
+    if (!hAxes.isEmpty())
+        hAxes.first()->setTitleText("Easting (m)");
     const auto vAxes = chart->axes(Qt::Vertical);
-    if (!vAxes.isEmpty()) {
-        vAxes.first()->setTitleText("Northing (y)");
-    }
+    if (!vAxes.isEmpty())
+        vAxes.first()->setTitleText("Northing (m)");
 
     QHBoxLayout *root = new QHBoxLayout(this);
     root->setSpacing(0);
-    root->addWidget(leftWidget, 0);
+    root->setContentsMargins(0, 0, 0, 0);
+    root->addWidget(leftWidget,0);
     root->addWidget(chartView, 1);
     setLayout(root);
 
@@ -40,21 +39,20 @@ NetworkAdjustment::NetworkAdjustment(ProjectContext *_projectContext, QWidget *p
     refreshButtonStates();
 }
 
+
 void NetworkAdjustment::connectSignals()
 {
-    connect(setControlsBtn, &QPushButton::clicked,this, &NetworkAdjustment::onSetControlsClicked);
-    connect(optionsBtn, &QPushButton::clicked, this, &NetworkAdjustment::onOptionsClicked);
-    connect(runBtn, &QPushButton::clicked, this, &NetworkAdjustment::onRunClicked);
+    connect(setControlsBtn, &QPushButton::clicked, this, &NetworkAdjustment::onSetControlsClicked);
+    connect(adjustNetBtn, &QPushButton::clicked, this, &NetworkAdjustment::onAdjustNetClicked);
     connect(reportBtn, &QPushButton::clicked, this, &NetworkAdjustment::onReportClicked);
 
     if (projectContext) {
         connect(projectContext, &ProjectContext::baselineReady, this, &NetworkAdjustment::onBaselineDataReady);
         connect(projectContext, &ProjectContext::adjustmentFinished,this, [this]() {
-            const auto &r = projectContext->adjustmentResult;
-            if (r.success) {
-                showStatsCard(true, r.constrained, r.sigma0, r.dof, r.rms3D);
-                chartView->drawChartAdjusted(projectContext->stations,projectContext->baselines,projectContext->adjustmentResult.adjustedECEF);
-            }
+            restoreStatsCard();
+            const auto &ar = projectContext->adjustmentResult;
+            if (!ar.mergedAdjustedECEF.isEmpty())
+                chartView->drawChartAdjusted(projectContext->stations,projectContext->baselines,ar.mergedAdjustedECEF);
             refreshButtonStates();
         });
     }
@@ -67,6 +65,7 @@ void NetworkAdjustment::buildLeftPanel()
 
     QVBoxLayout *lay = new QVBoxLayout(leftWidget);
     lay->setSpacing(8);
+    lay->setContentsMargins(12, 16, 12, 12);
 
     heading = new QLabel("Network\nAdjustment");
     heading->setObjectName("networkHeading");
@@ -87,22 +86,19 @@ void NetworkAdjustment::buildLeftPanel()
     setControlsBtn = new QPushButton("Control Points");
     setControlsBtn->setObjectName("setBases");
     setControlsBtn->setCursor(Qt::PointingHandCursor);
-    setControlsBtn->setToolTip("Set which stations are fixed control points");
+    setControlsBtn->setToolTip("Mark which stations hold known control coordinates.\nIf none are checked, a Free Network adjustment runs.");
 
-    optionsBtn = new QPushButton("Options");
-    optionsBtn->setObjectName("options");
-    optionsBtn->setCursor(Qt::PointingHandCursor);
-
-    runBtn = new QPushButton("Run Adjustment");
-    runBtn->setObjectName("runBtn");
-    runBtn->setCursor(Qt::PointingHandCursor);
-    runBtn->setEnabled(false);
+    adjustNetBtn = new QPushButton("Adjust Network");
+    adjustNetBtn->setObjectName("runBtn");
+    adjustNetBtn->setCursor(Qt::PointingHandCursor);
+    adjustNetBtn->setEnabled(false);
+    adjustNetBtn->setToolTip("Opens the Adjust Network dialog.\nSelect which subnetworks to adjust and configure weighting.");
 
     reportBtn = new QPushButton("Get Report");
     reportBtn->setObjectName("getReport");
     reportBtn->setCursor(Qt::PointingHandCursor);
     reportBtn->setEnabled(false);
-
+    reportBtn->setToolTip("Generate the network adjustment report.");
     buildStatsCard();
     lay->addWidget(heading);
     lay->addSpacing(10);
@@ -112,9 +108,8 @@ void NetworkAdjustment::buildLeftPanel()
     lay->addWidget(divider);
     lay->addSpacing(6);
     lay->addWidget(setControlsBtn);
-    lay->addWidget(optionsBtn);
     lay->addSpacing(8);
-    lay->addWidget(runBtn);
+    lay->addWidget(adjustNetBtn);
     lay->addWidget(reportBtn);
     lay->addStretch();
     lay->addWidget(statsCard);
@@ -133,19 +128,29 @@ void NetworkAdjustment::buildStatsCard()
     statsTitle = new QLabel("Last Adjustment");
     statsTitle->setObjectName("networkStatsTitle");
 
+    statSubnet = new QLabel("—");
+    statSubnet->setObjectName("networkStatRow");
+
     statType = new QLabel("Type: —");
+    statType->setObjectName("networkStatRow");
+
     statSigma0 = new QLabel("σ₀: —");
+    statSigma0->setObjectName("networkStatRow");
+
     statDof = new QLabel("DOF: —");
-    statRms = new QLabel("RMS: — m");
+    statDof->setObjectName("networkStatRow");
+
+    statRms = new QLabel("RMS: —");
+    statRms->setObjectName("networkStatRow");
+
     statResult = new QLabel("—");
     statResult->setObjectName("networkStatResult");
 
-    for (auto *lbl : {statType, statSigma0, statDof, statRms}) {
-        lbl->setObjectName("networkStatRow");
+    for (auto *lbl : {statSubnet, statType, statSigma0, statDof, statRms})
         lbl->setWordWrap(true);
-    }
 
     sl->addWidget(statsTitle);
+    sl->addWidget(statSubnet);
     sl->addWidget(statType);
     sl->addWidget(statSigma0);
     sl->addWidget(statDof);
@@ -153,12 +158,46 @@ void NetworkAdjustment::buildStatsCard()
     sl->addWidget(statResult);
 }
 
+void NetworkAdjustment::showStatsCard(const SubnetworkResult &r)
+{
+    statSubnet->setText( r.subnetworkIndex > 0 ? QString("Subnetwork %1").arg(r.subnetworkIndex) : QString("—"));
+    statType->setText(QString("Type: %1").arg(r.constrained ? "Constrained" : "Free Network"));
+    statSigma0->setText(QString("σ₀: %1").arg(qIsNaN(r.sigma0) ? "—" : QString::number(r.sigma0, 'f', 4)));
+    statDof->setText(QString("DOF: %1").arg(r.dof > 0 ? QString::number(r.dof) : "—"));
+    statRms->setText(QString("RMS: %1").arg(qIsNaN(r.rms3D)? "—": QString::number(r.rms3D * 1000.0, 'f', 1) + " mm"));
+
+    if (r.chiSquarePassed) {
+        statResult->setText("PASSED");
+        statResult->setProperty("resultState", "passed");
+    } else {
+        statResult->setText("FAILED");
+        statResult->setProperty("resultState", "failed");
+    }
+    statResult->style()->unpolish(statResult);
+    statResult->style()->polish(statResult);
+    statsCard->show();
+}
+
+void NetworkAdjustment::restoreStatsCard()
+{
+    if (!projectContext) return;
+    const AdjustmentResult &ar = projectContext->adjustmentResult;
+    int idx = ar.activeSubnetworkIndex;
+    if (idx > 0 && ar.subnetworkResults.contains(idx))
+        showStatsCard(ar.subnetworkResults[idx]);
+}
+
+void NetworkAdjustment::hideStatsCard()
+{
+    statsCard->hide();
+}
+
 int NetworkAdjustment::fixedCount() const
 {
     if (!projectContext) return 0;
     int n = 0;
     for (const auto &st : std::as_const(projectContext->stations))
-        if (st.isFixed) n++;
+        if (st.isFixed) ++n;
     return n;
 }
 
@@ -173,7 +212,9 @@ void NetworkAdjustment::refreshModeBadge()
     if (fixed > 0) {
         modeBadge->setText("CONSTRAINED");
         modeBadge->setProperty("mode", "constrained");
-        modeDesc->setText( QString("%1 control point%2 fixed").arg(fixed).arg(fixed == 1 ? "" : "s"));
+        modeDesc->setText(
+            QString("%1 control point%2 fixed")
+                .arg(fixed).arg(fixed == 1 ? "" : "s"));
     } else {
         modeBadge->setText("FREE NETWORK");
         modeBadge->setProperty("mode", "free");
@@ -186,72 +227,9 @@ void NetworkAdjustment::refreshModeBadge()
 void NetworkAdjustment::refreshButtonStates()
 {
     bool hasBaselines = projectContext && !projectContext->baselines.isEmpty();
-    runBtn->setEnabled(hasBaselines);
-
-    bool hasResult = projectContext && projectContext->adjustmentResult.success;
+    adjustNetBtn->setEnabled(hasBaselines);
+    bool hasResult = projectContext && projectContext->adjustmentResult.anySuccess();
     reportBtn->setEnabled(hasResult);
-}
-
-
-bool NetworkAdjustment::validateNetwork()
-{
-    if (!projectContext || projectContext->baselines.isEmpty()) {
-        CustomMessageBox mb("ERROR", "No baselines found.\nPlease complete baseline processing first.", "OK", this);
-        mb.exec();
-        return false;
-    }
-
-    if (projectContext->stations.isEmpty()) {
-        CustomMessageBox mb("ERROR", "No stations found.", "OK", this);
-        mb.exec();
-        return false;
-    }
-    if (!isConstrainedMode())
-        return true;
-    QSet<QString> visited;
-    QQueue<QString> queue;
-
-    for (auto it = projectContext->stations.constBegin();
-         it != projectContext->stations.constEnd(); ++it) {
-        if (it.value().isFixed) {
-            queue.enqueue(it.key());
-            visited.insert(it.key());
-        }
-    }
-
-    while (!queue.isEmpty()) {
-        QString cur = queue.dequeue();
-        for (const ProjectBaseline &bl : std::as_const(projectContext->baselines)) {
-            if (bl.from == cur && !visited.contains(bl.to)) {
-                visited.insert(bl.to);
-                queue.enqueue(bl.to);
-            }
-            if (bl.to == cur && !visited.contains(bl.from)) {
-                visited.insert(bl.from);
-                queue.enqueue(bl.from);
-            }
-        }
-    }
-
-    QStringList disconnected;
-    for (auto it = projectContext->stations.constBegin();
-         it != projectContext->stations.constEnd(); ++it) {
-        if (!visited.contains(it.key()))
-            disconnected.append(it.value().stationId.isEmpty()
-                                    ? it.key()
-                                    : it.value().stationId);
-    }
-
-    if (!disconnected.isEmpty()) {
-        QString msg = QString("These stations are not connected to any control point:\n\n%1\n\n"
-                    "Add baselines to connect them, or use a Free Network adjustment "
-                    "(deselect all control points).")
-                .arg(disconnected.join(", "));
-        CustomMessageBox mb("ERROR", msg, "OK", this);
-        mb.exec();
-        return false;
-    }
-    return true;
 }
 
 void NetworkAdjustment::onSetControlsClicked()
@@ -260,43 +238,142 @@ void NetworkAdjustment::onSetControlsClicked()
     dlg.exec();
     refreshModeBadge();
     refreshButtonStates();
-
     if (projectContext && !projectContext->stations.isEmpty())
         chartView->drawChart(projectContext->stations, projectContext->baselines);
 }
 
-void NetworkAdjustment::onOptionsClicked()
+void NetworkAdjustment::onAdjustNetClicked()
 {
-    AdjustOptions dlg(adjOptions, this);
-    dlg.exec();
-}
+    if (!projectContext || projectContext->baselines.isEmpty()) {
+        CustomMessageBox mb("ERROR","No baselines found.\nComplete baseline processing first.","OK", this);
+        mb.exec();
+        return;
+    }
 
-void NetworkAdjustment::onRunClicked()
-{
-    if (!validateNetwork())
+    AdjustNetworkDialog dlg(projectContext, adjOptions, this);
+    if (dlg.exec() != QDialog::Accepted)
         return;
 
-    bool constrained = isConstrainedMode();
+    QVector<int> toAdjust = dlg.selectedSubnetworks();
+    if (toAdjust.isEmpty())
+        return;
 
-    // ── ALGORITHM PLACEHOLDER ──────────────────────────────────────
-    // The actual solver (buildNetworkModel / solveLeastSquares) will be
-    // wired in here in the next implementation step.
-    // For now: inform the user of what mode will run.
-    QString modeStr = constrained ? "Constrained" : "Free Network";
-    CustomMessageBox mb("INFO", QString("Ready to run %1 adjustment.\n\n" "Stations : %2\n" "Baselines: %3\n" "Fixed pts: %4\n\n" "Algorithm implementation coming next.")
-            .arg(modeStr)
-            .arg(projectContext->stations.size())
-            .arg(projectContext->baselines.size())
-            .arg(fixedCount()),"OK", this);
-    mb.exec();
+    // ── BACKEND call ───────────────────────────────────────────────
+    //  Replace this block with actual LSSolver calls when the solver
+    //       is implemented. For each index in toAdjust:
+    //
+    //   for (int subnetIdx : toAdjust) {
+    //       // Find matching SubnetworkInfo
+    //       SubnetworkInfo *info = nullptr;
+    //       for (SubnetworkInfo &s : projectContext->subnetworks)
+    //           if (s.index == subnetIdx) { info = &s; break; }
+    //       if (!info) continue;
+    //
+    //       // Run solver
+    //       LSSolver solver(projectContext, adjOptions, *info);
+    //       SubnetworkResult result = solver.solve();
+    //
+    //       // Store result (merges into mergedAdjustedECEF automatically)
+    //       projectContext->adjustmentResult.storeSubnetworkResult(result);
+    //       info->hasResult = result.success;
+    //   }
+    //
 
+    // ── Temporary frontend
+    for (int subnetIdx : toAdjust) {
+        SubnetworkInfo *info = nullptr;
+        for (SubnetworkInfo &s : projectContext->subnetworks)
+            if (s.index == subnetIdx) { info = &s; break; }
+        if (!info) continue;
+
+        SubnetworkResult fakeResult;
+        fakeResult.subnetworkIndex = subnetIdx;
+        fakeResult.success = true;
+        fakeResult.constrained = info->isConstrained;
+        fakeResult.usedCovariance = adjOptions.useCovariance;
+        fakeResult.sigma0 = NAN;   // solver will fill this
+        fakeResult.rms3D = NAN;
+        fakeResult.dof = 0;
+        fakeResult.chiSquarePassed = false;
+        fakeResult.adjustedAt = QDateTime::currentDateTime();
+
+        for (const QString &uid : info->stationUIDs) {
+            if (projectContext->stations.contains(uid)) {
+                const ProjectStation &st = projectContext->stations[uid];
+                fakeResult.adjustedECEF[uid] =
+                    QVector3D(st.ecef.X, st.ecef.Y, st.ecef.Z);
+            }
+        }
+
+        projectContext->adjustmentResult.storeSubnetworkResult(fakeResult);
+        info->hasResult = true;
+    }
+    // temporary
+
+    int lastIdx = toAdjust.last();
+    if (projectContext->adjustmentResult.subnetworkResults.contains(lastIdx))
+        showStatsCard(projectContext->adjustmentResult.subnetworkResults[lastIdx]);
+
+    chartView->drawChartAdjusted(projectContext->stations,projectContext->baselines, projectContext->adjustmentResult.mergedAdjustedECEF);
+
+    refreshButtonStates();
+    emit projectContext->adjustmentFinished();
 }
 
 void NetworkAdjustment::onReportClicked()
 {
-    // Stub — report generation implemented in a future step
-    CustomMessageBox mb("INFO","Report generation will be implemented in the next step.","OK", this);
-    mb.exec();
+    if (!projectContext) return;
+    const AdjustmentResult &ar = projectContext->adjustmentResult;
+
+    if (ar.subnetworkResults.isEmpty()) return;
+
+    // ── BACKEND call ───────────────────────────────────────────────
+    //  Replace these message boxes with actual report generation.
+    // The report class (NetworkAdjustmentReport) will be wired here.
+    // It receives either a single SubnetworkResult or all results.
+    //
+    // Single subnetwork:
+    //   NetworkAdjustmentReport report(projectContext,
+    //                                   ar.subnetworkResults[selectedIdx],
+    //                                   this);
+    //   report.exec();
+    //
+    // All subnetworks:
+    //   NetworkAdjustmentReport report(projectContext, ar, this);
+    //   report.exec();
+    //
+
+    if (ar.subnetworkResults.size() == 1) {
+        int idx = ar.subnetworkResults.constBegin().key();
+        const SubnetworkResult &r = ar.subnetworkResults[idx];
+        CustomMessageBox mb("INFO", QString("Report for Subnetwork %1\n" "Type: %2\n" "Status: %3\n\n" "[Report generation will be implemented next]").arg(idx).arg(r.constrained ? "Constrained" : "Free Network").arg(r.success ? "Adjusted" : "Not adjusted"),
+                            "OK", this);
+        mb.exec();
+        return;
+    }
+
+    QStringList choices;
+    for (auto it = ar.subnetworkResults.constBegin();it != ar.subnetworkResults.constEnd(); ++it)
+        choices << QString("Subnetwork %1  (%2)").arg(it.key()).arg(it.value().constrained? "Constrained" : "Free Network");
+    choices << "All Subnetworks (Combined)";
+
+    bool ok;
+    QString chosen = QInputDialog::getItem( this, "Select Report", "Which adjustment report would you like to view?", choices, 0, false, &ok);
+    if (!ok) return;
+    if (chosen.startsWith("All")) {
+        CustomMessageBox mb("INFO","Combined report for all subnetworks.\n\n""[Report generation will be implemented next]","OK", this);
+        mb.exec();
+    } else {
+        int selIdx = chosen.split(" ", Qt::SkipEmptyParts).value(1).toInt();
+        if (ar.subnetworkResults.contains(selIdx)) {
+            const SubnetworkResult &r = ar.subnetworkResults[selIdx];
+            CustomMessageBox mb("INFO", QString("Report for Subnetwork %1\n" "Type: %2\n" "Status: %3\n\n" "[Report generation will be implemented next]")
+                                    .arg(selIdx)
+                                    .arg(r.constrained ? "Constrained" : "Free Network")
+                                    .arg(r.success ? "Adjusted" : "Not adjusted"), "OK", this);
+            mb.exec();
+        }
+    }
 }
 
 void NetworkAdjustment::onBaselineDataReady()
@@ -307,47 +384,21 @@ void NetworkAdjustment::onBaselineDataReady()
         chartView->drawChart(projectContext->stations, projectContext->baselines);
 }
 
-void NetworkAdjustment::showStatsCard(bool passed, bool constrained, double sigma0, int    dof, double rms3d)
-{
-    statType->setText(
-        QString("Type: %1").arg(constrained ? "Constrained" : "Free Network"));
-    statSigma0->setText(
-        QString("σ₀: %1").arg(
-            qIsNaN(sigma0) ? "—" : QString::number(sigma0, 'f', 4)));
-    statDof->setText(
-        QString("DOF: %1").arg(dof > 0 ? QString::number(dof) : "—"));
-    statRms->setText(
-        QString("RMS: %1 m").arg(
-            qIsNaN(rms3d) ? "—" : QString::number(rms3d * 1000.0, 'f', 1) + " mm"));
-
-    if (passed) {
-        statResult->setText("PASSED");
-        statResult->setProperty("resultState", "passed");
-    } else {
-        statResult->setText("FAILED");
-        statResult->setProperty("resultState", "failed");
-    }
-    statResult->style()->unpolish(statResult);
-    statResult->style()->polish(statResult);
-
-    statsCard->show();
-}
-void NetworkAdjustment::hideStatsCard()
-{
-    statsCard->hide();
-}
-
 void NetworkAdjustment::showEvent(QShowEvent *event)
 {
     QWidget::showEvent(event);
 
     if (projectContext && !projectContext->stations.isEmpty()) {
-        if (projectContext->adjustmentResult.success) {
-            chartView->drawChartAdjusted( projectContext->stations, projectContext->baselines, projectContext->adjustmentResult.adjustedECEF);
+        const AdjustmentResult &ar = projectContext->adjustmentResult;
+
+        if (!ar.mergedAdjustedECEF.isEmpty()) {
+            chartView->drawChartAdjusted(projectContext->stations,projectContext->baselines,ar.mergedAdjustedECEF);
         } else {
-            chartView->drawChart(projectContext->stations,  projectContext->baselines);
+            chartView->drawChart(projectContext->stations, projectContext->baselines);
         }
+        restoreStatsCard();
     }
+
     refreshModeBadge();
     refreshButtonStates();
 }

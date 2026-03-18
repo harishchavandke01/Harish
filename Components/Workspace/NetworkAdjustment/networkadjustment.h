@@ -2,74 +2,73 @@
 #define NETWORKADJUSTMENT_H
 
 #include <QWidget>
+#include <QLabel>
+#include <QPushButton>
+#include <QChart>
+#include <QFrame>
+#include <QSet>
 #include "../../Context/projectcontext.h"
 #include "AdjustOptions/adjustoptions.h"
 #include "../BaselineProcessing/ChartView/chartview.h"
-#include <QLabel>
-#include <QPushButton>
-#include <QGroupBox>
-#include <QChart>
-#include <QWidget>
-#include <QFrame>
-#include <QSet>
 
 class NetworkAdjustment : public QWidget
 {
     Q_OBJECT
 
-
 public:
-    explicit NetworkAdjustment(ProjectContext *_projectContext,QWidget *parent = nullptr);
-
-signals:
+    explicit NetworkAdjustment(ProjectContext *_projectContext,
+                               QWidget        *parent = nullptr);
 
 private:
     ProjectContext    *projectContext;
     AdjustmentOptions  adjOptions;
 
-    QWidget *leftWidget;
-    QLabel *heading;
-    QLabel *modeBadge;
-    QLabel *modeDesc;
+    // ── Left panel widgets ────────────────────────────────────────────────
+    QWidget     *leftWidget;
+    QLabel      *heading;
+    QLabel      *modeBadge;
+    QLabel      *modeDesc;
+    QFrame      *divider;
 
-    QFrame *divider;
-    QPushButton *setControlsBtn;
-    QPushButton *optionsBtn;
-    QPushButton *runBtn;
-    QPushButton *reportBtn;
+    QPushButton *setControlsBtn;  // opens FixStations dialog
+    QPushButton *adjustNetBtn;    // opens AdjustNetworkDialog (was runBtn)
+    QPushButton *reportBtn;       // generates per-subnetwork report
 
+    // ── Stats card ────────────────────────────────────────────────────────
     QFrame *statsCard;
     QLabel *statsTitle;
-    QLabel *statType;
-    QLabel *statSigma0;
-    QLabel *statDof;
-    QLabel *statRms;
-    QLabel *statResult;
+    QLabel *statSubnet;   // "Subnetwork 1"
+    QLabel *statType;     // "Constrained" / "Free Network"
+    QLabel *statSigma0;   // σ₀ value
+    QLabel *statDof;      // degrees of freedom
+    QLabel *statRms;      // RMS 3D
+    QLabel *statResult;   // PASSED / FAILED
 
-    QChart *chart;
+    // ── Chart ─────────────────────────────────────────────────────────────
+    QChart    *chart;
     ChartView *chartView;
 
+    // ── Build helpers ─────────────────────────────────────────────────────
     void buildLeftPanel();
     void buildStatsCard();
     void connectSignals();
 
-    int  fixedCount() const;
+    // ── State helpers ─────────────────────────────────────────────────────
+    int  fixedCount()      const;
     bool isConstrainedMode() const;
-
     void refreshModeBadge();
     void refreshButtonStates();
-    bool validateNetwork();
 
-    void showStatsCard(bool passed,bool constrained,double sigma0,int dof,double rms3d);
+    // ── Stats card display ────────────────────────────────────────────────
+    void showStatsCard(const SubnetworkResult &r);
+    void restoreStatsCard();   // called on showEvent to restore last result
     void hideStatsCard();
 
 private slots:
     void onSetControlsClicked();
-    void onOptionsClicked();
-    void onRunClicked();
+    void onAdjustNetClicked();   // renamed from onRunClicked
     void onReportClicked();
     void onBaselineDataReady();
-
 
 protected:
     void showEvent(QShowEvent *event) override;

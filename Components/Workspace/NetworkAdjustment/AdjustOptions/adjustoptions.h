@@ -5,60 +5,21 @@
 #include <QWidget>
 #include <QLabel>
 #include <QPushButton>
-#include <QRadioButton>
 #include <QGuiApplication>
 #include <QScreen>
 #include <QMouseEvent>
-#include "../../../Utils/customcheckbox.h"
 
-struct AdjustmentOptions
-{
-    bool constrained    = true;   // not used for mode selection (mode is auto)
-    bool useCovariance  = true;
+// ── Options data — shared between AdjustOptions dialog and LSSolver ────────
+struct AdjustmentOptions {
+    bool   useCovariance = true;   // use full 3×3 cov from batchls
+    double aPrioriScalar = 1.0;    // multiplies all weights (1.0 = as-is)
+    double defaultSigmaH = 0.010;  // m — fallback horizontal sigma
+    double defaultSigmaV = 0.020;  // m — fallback vertical sigma
 };
 
-class AdjustOptions : public QDialog
-{
-    Q_OBJECT
-public:
-    explicit AdjustOptions(AdjustmentOptions &opts, QWidget *parent = nullptr);
-
-public:
-    QWidget     *topBar;
-    QPoint       dragStartPos;
-    bool         dragging = false;
-    QLabel      *icon;
-    QLabel      *title;
-    QPushButton *closeBtn;
-
-    QLabel         *heading;
-    CustomCheckBox *useConv;
-    QPushButton    *save;
-
-private slots:
-    void onClose();
-    void onSave();
-
-private:
-    AdjustmentOptions &options;
-
-protected:
-    void showEvent(QShowEvent *event) override {
-        QDialog::showEvent(event);
-        move(QGuiApplication::primaryScreen()->geometry().center() - rect().center());
-    }
-    void mousePressEvent(QMouseEvent *event) override {
-        if (event->button() == Qt::LeftButton) {
-            QWidget *child = childAt(event->pos());
-            dragging = child && (child == topBar || topBar->isAncestorOf(child));
-            if (dragging) dragStartPos = event->globalPosition().toPoint() - pos();
-        }
-    }
-    void mouseMoveEvent(QMouseEvent *event) override {
-        if (dragging && (event->buttons() & Qt::LeftButton))
-            move(event->globalPosition().toPoint() - dragStartPos);
-    }
-    void mouseReleaseEvent(QMouseEvent *) override { dragging = false; }
-};
+// NOTE: The old AdjustOptions dialog is no longer shown as a standalone
+// button. Weighting options are now embedded in Tab 2 of AdjustNetworkDialog.
+// This file is kept for the struct definition only.
+// The AdjustOptions class below is intentionally left minimal.
 
 #endif // ADJUSTOPTIONS_H

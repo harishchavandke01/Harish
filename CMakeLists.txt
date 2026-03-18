@@ -29,6 +29,8 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     find_package(Qt6 REQUIRED COMPONENTS Widgets)
     find_package(Qt6 REQUIRED COMPONENTS Core)
     find_package(Qt6 REQUIRED COMPONENTS Widgets)
+    find_package(Qt6 REQUIRED COMPONENTS Core)
+    find_package(Qt6 REQUIRED COMPONENTS Widgets)
     find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets PrintSupport Charts Svg)
     find_package(Eigen3 CONFIG REQUIRED)
 
@@ -70,6 +72,8 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         Components/Workspace/BaselineProcessing/TimeBasedView/timebasedview.h Components/Workspace/BaselineProcessing/TimeBasedView/timebasedview.cpp
         Components/Utils/LoopClosureUtils/loopclosureutils.h Components/Utils/LoopClosureUtils/loopclosureutils.cpp
         Components/Workspace/BaselineProcessing/GenerateReport/generateloopclosurereport.h Components/Workspace/BaselineProcessing/GenerateReport/generateloopclosurereport.cpp
+        Components/Workspace/NetworkAdjustment/SubnetworkUtils/subnetworkutils.h Components/Workspace/NetworkAdjustment/SubnetworkUtils/subnetworkutils.cpp
+        Components/Workspace/NetworkAdjustment/AdjustNetworkDialog/adjustnetworkdialog.h Components/Workspace/NetworkAdjustment/AdjustNetworkDialog/adjustnetworkdialog.cpp
 
     )
 else()
@@ -107,6 +111,8 @@ target_link_libraries(SurveyPod PRIVATE Qt6::Widgets)
 target_link_libraries(SurveyPod PRIVATE Qt6::Core)
 target_link_libraries(SurveyPod PRIVATE Qt6::Widgets)
 target_link_libraries(SurveyPod PRIVATE Qt6::Widgets)
+target_link_libraries(SurveyPod PRIVATE Qt6::Widgets)
+target_link_libraries(SurveyPod PRIVATE Qt6::Core)
 target_link_libraries(SurveyPod PRIVATE Qt6::Widgets)
 target_link_libraries(SurveyPod PRIVATE Qt6::Core)
 target_link_libraries(SurveyPod PRIVATE Qt6::Widgets)
