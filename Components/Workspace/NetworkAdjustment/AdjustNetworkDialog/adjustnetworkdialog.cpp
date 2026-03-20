@@ -176,12 +176,14 @@ void AdjustNetworkDialog::populateSubnetworkTable()
         nameItem->setTextAlignment(Qt::AlignCenter);
         subnetTable->setItem(r, COL_NAME, nameItem);
 
-        QStringList stNames;
+        QSet<QString> uniqueStationIds;
         for (const QString &uid : s.stationUIDs) {
             const QString &sid = projectContext->stations.value(uid).stationId;
-            stNames << (sid.isEmpty() ? uid : sid);
+            uniqueStationIds.insert(sid.isEmpty() ? uid : sid);
         }
+        QStringList stNames = uniqueStationIds.values();
         stNames.sort();
+
         QString stText = QString("%1 station%2: %3") .arg(stNames.size()) .arg(stNames.size() == 1 ? "" : "s") .arg(stNames.join(", "));
         auto *stItem = new QTableWidgetItem(stText);
         stItem->setToolTip(stNames.join("\n"));
@@ -197,9 +199,7 @@ void AdjustNetworkDialog::populateSubnetworkTable()
 
         auto *statusItem = new QTableWidgetItem( s.hasResult ? "✓  Adjusted" : "—");
         statusItem->setTextAlignment(Qt::AlignCenter);
-        statusItem->setForeground(s.hasResult
-                                      ? QBrush(QColor("#00b894"))
-                                      : QBrush(QColor("#b2bec3")));
+        statusItem->setForeground(s.hasResult ? QBrush(QColor("#00b894")) : QBrush(QColor("#b2bec3")));
         subnetTable->setItem(r, COL_STATUS, statusItem);
     }
 }
@@ -300,19 +300,14 @@ QVector<int> AdjustNetworkDialog::selectedSubnetworks() const
     return result;
 }
 
-// ── Slots ──────────────────────────────────────────────────────────────────
-
 void AdjustNetworkDialog::onAdjustClicked()
 {
-    // Validate: at least one subnetwork must be checked
     if (selectedSubnetworks().isEmpty()) {
-        // Visual feedback: briefly highlight the table header
         subnetSummaryLabel->setText(
             "<span style='color:#e17055;'>Please select at least one "
             "subnetwork to adjust.</span>");
         return;
     }
-    // Save weighting options before accepting
     options.useCovariance  = useCovCheck->isChecked();
     options.aPrioriScalar  = aPrioriSpin->value();
     options.defaultSigmaH  = sigmaHSpin->value();

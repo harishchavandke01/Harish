@@ -187,27 +187,6 @@ void NetworkAdjustment::refreshSubnetCombo()
     statsCard->show();
 }
 
-
-// void NetworkAdjustment::showStatsCard(const SubnetworkResult &r)
-// {
-//     statSubnet->setText( r.subnetworkIndex > 0 ? QString("Subnetwork %1").arg(r.subnetworkIndex) : QString("—"));
-//     statType->setText(QString("Type: %1").arg(r.constrained ? "Constrained" : "Free Network"));
-//     statSigma0->setText(QString("σ₀: %1").arg(qIsNaN(r.sigma0) ? "—" : QString::number(r.sigma0, 'f', 4)));
-//     statDof->setText(QString("DOF: %1").arg(r.dof > 0 ? QString::number(r.dof) : "—"));
-//     statRms->setText(QString("RMS: %1").arg(qIsNaN(r.rms3D)? "—": QString::number(r.rms3D * 1000.0, 'f', 1) + " mm"));
-
-//     if (r.chiSquarePassed) {
-//         statResult->setText("PASSED");
-//         statResult->setProperty("resultState", "passed");
-//     } else {
-//         statResult->setText("FAILED");
-//         statResult->setProperty("resultState", "failed");
-//     }
-//     statResult->style()->unpolish(statResult);
-//     statResult->style()->polish(statResult);
-//     statsCard->show();
-// }
-
 void NetworkAdjustment::showStatsForSubnet(int subnetIndex)
 {
     if (!projectContext) return;
@@ -252,10 +231,12 @@ void NetworkAdjustment::hideStatsCard()
 int NetworkAdjustment::fixedCount() const
 {
     if (!projectContext) return 0;
-    int n = 0;
-    for (const auto &st : std::as_const(projectContext->stations))
-        if (st.isFixed) ++n;
-    return n;
+    QSet<QString> uniqueFixed;
+    for (const auto &st : std::as_const(projectContext->stations)) {
+        if (st.isFixed)
+            uniqueFixed.insert(st.stationId);
+    }
+    return uniqueFixed.size();
 }
 
 bool NetworkAdjustment::isConstrainedMode() const

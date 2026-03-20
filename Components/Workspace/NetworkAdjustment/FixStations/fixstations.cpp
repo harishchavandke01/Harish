@@ -188,22 +188,33 @@ void FixStations::populateTable()
     if (!projectContext) return;
 
     table->clearContents();
-    table->setRowCount(projectContext->stations.size());
+    QMap<QString, QString> uniqueStations;
+    for (auto it = projectContext->stations.constBegin(); it != projectContext->stations.constEnd(); ++it) {
+        const QString &sid = it.value().stationId;
+        if (!uniqueStations.contains(sid)) uniqueStations[sid] = it.key();
+    }
 
+    table->setRowCount(uniqueStations.size());
     int row = 0;
-    for (auto it = projectContext->stations.constBegin(); it != projectContext->stations.constEnd(); ++it, ++row)
+    for (auto it = uniqueStations.constBegin(); it != uniqueStations.constEnd(); ++it, ++row)
     {
-        const QString &key = it.key();
-        const ProjectStation &st  = it.value();
+        QString stationId = it.key();
+        QString uid = it.value();
+        const ProjectStation &st = projectContext->stations[uid];
 
-        QString displayName = st.stationId.isEmpty() ? key : st.stationId;
-        auto *nameItem = new QTableWidgetItem(displayName);
-        nameItem->setData(Qt::UserRole, key);
-        nameItem->setToolTip(key);
+        auto *nameItem = new QTableWidgetItem(stationId);
+        nameItem->setData(Qt::UserRole, stationId);
         table->setItem(row, COL_STATION, nameItem);
 
         CustomCheckBox *cb = new CustomCheckBox("", true);
-        st.isFixed ? cb->setVal(true) : cb->setVal(false);
+        bool isFixed = false;
+        for (auto &s : projectContext->stations) {
+            if (s.stationId == stationId && s.isFixed) {
+                isFixed = true;
+                break;
+            }
+        }
+        cb->setVal(isFixed);
 
         QWidget *cellWidget = new QWidget(table);
         QHBoxLayout *lay = new QHBoxLayout(cellWidget);
@@ -215,6 +226,7 @@ void FixStations::populateTable()
         auto fmt = [](double v) -> QString {
             return std::isfinite(v) ? QString::number(v, 'f', 3) : "—";
         };
+
         table->setItem(row, COL_EAST,   new QTableWidgetItem(fmt(st.easting)));
         table->setItem(row, COL_NORTH,  new QTableWidgetItem(fmt(st.northing)));
         table->setItem(row, COL_HEIGHT, new QTableWidgetItem(fmt(st.orthometric)));
@@ -227,15 +239,20 @@ void FixStations::populateTable()
 void FixStations::onSave()
 {
     for (int row = 0; row < table->rowCount(); ++row) {
-        QTableWidgetItem *nameItem  = table->item(row, COL_STATION);
+
+        QTableWidgetItem *nameItem = table->item(row, COL_STATION);
         if (!nameItem) continue;
-        QString key = nameItem->data(Qt::UserRole).toString();
+
+        QString stationId = nameItem->data(Qt::UserRole).toString();
+
         QWidget *cell = table->cellWidget(row, COL_FIXED);
         CustomCheckBox *cb = cell->findChild<CustomCheckBox *>();
         bool fixed = cb && cb->isChecked();
-
-        if (projectContext->stations.contains(key))
-            projectContext->stations[key].isFixed = fixed;
+        for (auto it = projectContext->stations.begin(); it != projectContext->stations.end(); ++it) {
+            if (it.value().stationId == stationId) {
+                it.value().isFixed = fixed;
+            }
+        }
     }
     accept();
 }
