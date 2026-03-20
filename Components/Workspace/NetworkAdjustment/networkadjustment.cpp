@@ -45,14 +45,15 @@ void NetworkAdjustment::connectSignals()
     connect(setControlsBtn, &QPushButton::clicked, this, &NetworkAdjustment::onSetControlsClicked);
     connect(adjustNetBtn, &QPushButton::clicked, this, &NetworkAdjustment::onAdjustNetClicked);
     connect(reportBtn, &QPushButton::clicked, this, &NetworkAdjustment::onReportClicked);
-
+    connect(subnetCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &NetworkAdjustment::onSubnetComboChanged);
     if (projectContext) {
-        connect(projectContext, &ProjectContext::baselineReady, this, &NetworkAdjustment::onBaselineDataReady);
+        connect(projectContext, &ProjectContext::baselineReady,this, &NetworkAdjustment::onBaselineDataReady);
         connect(projectContext, &ProjectContext::adjustmentFinished,this, [this]() {
+            refreshSubnetCombo();
             restoreStatsCard();
             const auto &ar = projectContext->adjustmentResult;
             if (!ar.mergedAdjustedECEF.isEmpty())
-                chartView->drawChartAdjusted(projectContext->stations,projectContext->baselines,ar.mergedAdjustedECEF);
+                chartView->drawChartAdjusted( projectContext->stations, projectContext->baselines, ar.mergedAdjustedECEF);
             refreshButtonStates();
         });
     }
@@ -122,14 +123,16 @@ void NetworkAdjustment::buildStatsCard()
     statsCard->hide();
 
     QVBoxLayout *sl = new QVBoxLayout(statsCard);
-    sl->setContentsMargins(10, 10, 10, 10);
+    sl->setContentsMargins(7, 7, 7, 7);
     sl->setSpacing(5);
 
-    statsTitle = new QLabel("Last Adjustment");
+    statsTitle = new QLabel("Ajustment Results");
     statsTitle->setObjectName("networkStatsTitle");
 
-    statSubnet = new QLabel("—");
-    statSubnet->setObjectName("networkStatRow");
+    subnetCombo = new QComboBox();
+    subnetCombo->setObjectName("networkSubnetCombo");
+    subnetCombo->setCursor(Qt::PointingHandCursor);
+    subnetCombo->setToolTip("Select subnetwork");
 
     statType = new QLabel("Type: —");
     statType->setObjectName("networkStatRow");
@@ -146,11 +149,11 @@ void NetworkAdjustment::buildStatsCard()
     statResult = new QLabel("—");
     statResult->setObjectName("networkStatResult");
 
-    for (auto *lbl : {statSubnet, statType, statSigma0, statDof, statRms})
+    for (auto *lbl : {statType, statSigma0, statDof, statRms})
         lbl->setWordWrap(true);
 
     sl->addWidget(statsTitle);
-    sl->addWidget(statSubnet);
+    sl->addWidget(subnetCombo);
     sl->addWidget(statType);
     sl->addWidget(statSigma0);
     sl->addWidget(statDof);
@@ -158,13 +161,65 @@ void NetworkAdjustment::buildStatsCard()
     sl->addWidget(statResult);
 }
 
-void NetworkAdjustment::showStatsCard(const SubnetworkResult &r)
+void NetworkAdjustment::refreshSubnetCombo()
 {
-    statSubnet->setText( r.subnetworkIndex > 0 ? QString("Subnetwork %1").arg(r.subnetworkIndex) : QString("—"));
+    if (!projectContext) return;
+    const AdjustmentResult &ar = projectContext->adjustmentResult;
+    if (ar.subnetworkResults.isEmpty()) return;
+
+    subnetCombo->blockSignals(true);
+    subnetCombo->clear();
+
+    for (auto it = ar.subnetworkResults.constBegin(); it != ar.subnetworkResults.constEnd(); ++it)
+    {
+        const SubnetworkResult &r = it.value();
+        QString label = QString("Subnetwork %1  (%2)").arg(r.subnetworkIndex).arg(r.constrained ? "Constrained" : "Free");
+        subnetCombo->addItem(label, r.subnetworkIndex);
+    }
+    int activeIdx = ar.activeSubnetworkIndex;
+    for (int i = 0; i < subnetCombo->count(); ++i) {
+        if (subnetCombo->itemData(i).toInt() == activeIdx) {
+            subnetCombo->setCurrentIndex(i);
+            break;
+        }
+    }
+    subnetCombo->blockSignals(false);
+    statsCard->show();
+}
+
+
+// void NetworkAdjustment::showStatsCard(const SubnetworkResult &r)
+// {
+//     statSubnet->setText( r.subnetworkIndex > 0 ? QString("Subnetwork %1").arg(r.subnetworkIndex) : QString("—"));
+//     statType->setText(QString("Type: %1").arg(r.constrained ? "Constrained" : "Free Network"));
+//     statSigma0->setText(QString("σ₀: %1").arg(qIsNaN(r.sigma0) ? "—" : QString::number(r.sigma0, 'f', 4)));
+//     statDof->setText(QString("DOF: %1").arg(r.dof > 0 ? QString::number(r.dof) : "—"));
+//     statRms->setText(QString("RMS: %1").arg(qIsNaN(r.rms3D)? "—": QString::number(r.rms3D * 1000.0, 'f', 1) + " mm"));
+
+//     if (r.chiSquarePassed) {
+//         statResult->setText("PASSED");
+//         statResult->setProperty("resultState", "passed");
+//     } else {
+//         statResult->setText("FAILED");
+//         statResult->setProperty("resultState", "failed");
+//     }
+//     statResult->style()->unpolish(statResult);
+//     statResult->style()->polish(statResult);
+//     statsCard->show();
+// }
+
+void NetworkAdjustment::showStatsForSubnet(int subnetIndex)
+{
+    if (!projectContext) return;
+    const AdjustmentResult &ar = projectContext->adjustmentResult;
+
+    if (!ar.subnetworkResults.contains(subnetIndex)) return;
+    const SubnetworkResult &r = ar.subnetworkResults[subnetIndex];
+
     statType->setText(QString("Type: %1").arg(r.constrained ? "Constrained" : "Free Network"));
     statSigma0->setText(QString("σ₀: %1").arg(qIsNaN(r.sigma0) ? "—" : QString::number(r.sigma0, 'f', 4)));
     statDof->setText(QString("DOF: %1").arg(r.dof > 0 ? QString::number(r.dof) : "—"));
-    statRms->setText(QString("RMS: %1").arg(qIsNaN(r.rms3D)? "—": QString::number(r.rms3D * 1000.0, 'f', 1) + " mm"));
+    statRms->setText(QString("RMS: %1").arg(qIsNaN(r.rms3D) ? "—" : QString::number(r.rms3D * 1000.0, 'f', 1) + " mm"));
 
     if (r.chiSquarePassed) {
         statResult->setText("PASSED");
@@ -175,16 +230,18 @@ void NetworkAdjustment::showStatsCard(const SubnetworkResult &r)
     }
     statResult->style()->unpolish(statResult);
     statResult->style()->polish(statResult);
-    statsCard->show();
 }
 
 void NetworkAdjustment::restoreStatsCard()
 {
     if (!projectContext) return;
     const AdjustmentResult &ar = projectContext->adjustmentResult;
-    int idx = ar.activeSubnetworkIndex;
-    if (idx > 0 && ar.subnetworkResults.contains(idx))
-        showStatsCard(ar.subnetworkResults[idx]);
+    if (!ar.anySuccess()) return;
+
+    refreshSubnetCombo();
+    int idx = subnetCombo->currentData().toInt();
+    if (idx > 0)
+        showStatsForSubnet(idx);
 }
 
 void NetworkAdjustment::hideStatsCard()
@@ -230,6 +287,14 @@ void NetworkAdjustment::refreshButtonStates()
     adjustNetBtn->setEnabled(hasBaselines);
     bool hasResult = projectContext && projectContext->adjustmentResult.anySuccess();
     reportBtn->setEnabled(hasResult);
+}
+
+void NetworkAdjustment::onSubnetComboChanged(int comboIndex)
+{
+    if (comboIndex < 0 || !subnetCombo) return;
+    int subnetIndex = subnetCombo->itemData(comboIndex).toInt();
+    if (subnetIndex > 0)
+        showStatsForSubnet(subnetIndex);
 }
 
 void NetworkAdjustment::onSetControlsClicked()
@@ -279,7 +344,7 @@ void NetworkAdjustment::onAdjustNetClicked()
     //   }
     //
 
-    // ── Temporary frontend
+    // ── Temporary frontend simulation ─────────────────────────────────────
     for (int subnetIdx : toAdjust) {
         SubnetworkInfo *info = nullptr;
         for (SubnetworkInfo &s : projectContext->subnetworks)
@@ -289,33 +354,29 @@ void NetworkAdjustment::onAdjustNetClicked()
         SubnetworkResult fakeResult;
         fakeResult.subnetworkIndex = subnetIdx;
         fakeResult.success = true;
-        fakeResult.constrained = info->isConstrained;
-        fakeResult.usedCovariance = adjOptions.useCovariance;
-        fakeResult.sigma0 = NAN;   // solver will fill this
-        fakeResult.rms3D = NAN;
-        fakeResult.dof = 0;
-        fakeResult.chiSquarePassed = false;
+        fakeResult.constrained  = info->isConstrained;
+        fakeResult.usedCovariance  = adjOptions.useCovariance;
+        fakeResult.sigma0  = NAN;
+        fakeResult.rms3D  = NAN;
+        fakeResult.dof  = 0;
+        fakeResult.chiSquarePassed = true;
         fakeResult.adjustedAt = QDateTime::currentDateTime();
 
         for (const QString &uid : info->stationUIDs) {
             if (projectContext->stations.contains(uid)) {
                 const ProjectStation &st = projectContext->stations[uid];
-                fakeResult.adjustedECEF[uid] =
-                    QVector3D(st.ecef.X, st.ecef.Y, st.ecef.Z);
+                fakeResult.adjustedECEF[uid] =QVector3D((float)st.ecef.X, (float)st.ecef.Y, (float)st.ecef.Z);
             }
         }
-
         projectContext->adjustmentResult.storeSubnetworkResult(fakeResult);
         info->hasResult = true;
     }
-    // temporary
+    // ── End temporary simulation ──────────────────────────────────────────
 
+    refreshSubnetCombo();
     int lastIdx = toAdjust.last();
-    if (projectContext->adjustmentResult.subnetworkResults.contains(lastIdx))
-        showStatsCard(projectContext->adjustmentResult.subnetworkResults[lastIdx]);
-
-    chartView->drawChartAdjusted(projectContext->stations,projectContext->baselines, projectContext->adjustmentResult.mergedAdjustedECEF);
-
+    showStatsForSubnet(lastIdx);
+    chartView->drawChartAdjusted( projectContext->stations, projectContext->baselines, projectContext->adjustmentResult.mergedAdjustedECEF);
     refreshButtonStates();
     emit projectContext->adjustmentFinished();
 }
@@ -380,6 +441,7 @@ void NetworkAdjustment::onBaselineDataReady()
 {
     refreshModeBadge();
     refreshButtonStates();
+    hideStatsCard();
     if (projectContext && !projectContext->stations.isEmpty())
         chartView->drawChart(projectContext->stations, projectContext->baselines);
 }
@@ -387,7 +449,6 @@ void NetworkAdjustment::onBaselineDataReady()
 void NetworkAdjustment::showEvent(QShowEvent *event)
 {
     QWidget::showEvent(event);
-
     if (projectContext && !projectContext->stations.isEmpty()) {
         const AdjustmentResult &ar = projectContext->adjustmentResult;
 

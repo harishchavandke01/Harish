@@ -18,5 +18,7 @@
         <file>images/cross.svg</file>
         <file>images/link.svg</file>
         <file>images/optionw.svg</file>
+        <file>images/down.svg</file>
+        <file>images/up.svg</file>
     </qresource>
 </RCC>

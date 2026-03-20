@@ -191,10 +191,9 @@ void FixStations::populateTable()
     table->setRowCount(projectContext->stations.size());
 
     int row = 0;
-    for (auto it = projectContext->stations.constBegin();
-         it != projectContext->stations.constEnd(); ++it, ++row)
+    for (auto it = projectContext->stations.constBegin(); it != projectContext->stations.constEnd(); ++it, ++row)
     {
-        const QString       &key = it.key();
+        const QString &key = it.key();
         const ProjectStation &st  = it.value();
 
         QString displayName = st.stationId.isEmpty() ? key : st.stationId;

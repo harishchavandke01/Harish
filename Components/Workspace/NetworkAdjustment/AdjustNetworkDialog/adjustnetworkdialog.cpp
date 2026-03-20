@@ -40,7 +40,7 @@ AdjustNetworkDialog::AdjustNetworkDialog(ProjectContext *ctx, AdjustmentOptions 
 
     QWidget *contentWidget = new QWidget();
     QVBoxLayout *contentLay = new QVBoxLayout(contentWidget);
-    contentLay->setContentsMargins(0, 0, 0, 0);
+    contentLay->setContentsMargins(2, 0, 2, 0);
     contentLay->setSpacing(0);
     contentLay->addWidget(tabs, 1);
     contentLay->addLayout(btnRow);

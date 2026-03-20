@@ -74,7 +74,6 @@ private:
 
     QJsonObject jsonObsData;
 
-
 private:
     void startBatchSingleProcessing();
     void startBatchStaticProcessing();
@@ -89,9 +88,6 @@ private:
     bool isFileAlreadySelected(const QString &fullPath, const QString &fileName);
     void showFilesInDockList();
     void setProjectContextData();
-
-    void processDerivedBaselines(const QMap<QString, SitePosition> &solvedPoints, const QMap<QString, QStringList> &baseToRovers);
-
     void setUpInfoDock();
 
 private slots:
