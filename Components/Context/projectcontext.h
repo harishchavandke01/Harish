@@ -178,6 +178,13 @@ struct NetworkReport {
     QString adjustmentSummary;
 };
 
+struct AdjustmentOptions {
+    bool useCovariance = true;   // use full 3×3 cov from batchls
+    double aPrioriScalar = 1.0;    // multiplies all weights (1.0 = as-is)
+    double defaultSigmaH = 0.010;  // m — fallback horizontal sigma
+    double defaultSigmaV = 0.020;  // m — fallback vertical sigma
+};
+
 
 class ProjectContext : public QObject {
     Q_OBJECT

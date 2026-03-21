@@ -11,7 +11,6 @@
 #include <QGuiApplication>
 #include <QScreen>
 #include "../../../Context/projectcontext.h"
-#include "../AdjustOptions/adjustoptions.h"
 #include "../../../Utils/customcheckbox.h"
 
 class AdjustNetworkDialog : public QDialog
@@ -19,15 +18,12 @@ class AdjustNetworkDialog : public QDialog
     Q_OBJECT
 public:
     explicit AdjustNetworkDialog(ProjectContext*ctx, AdjustmentOptions &opts, QWidget *parent = nullptr);
-
-    // Returns the subnetwork indices (1-based) the user checked for adjustment
     QVector<int> selectedSubnetworks() const;
 
 private:
     ProjectContext    *projectContext;
     AdjustmentOptions &options;
 
-    // ── Title bar ─────────────────────────────────────────────────────────
     QWidget*topBar;
     QLabel      *iconLabel;
     QLabel      *titleLabel;
@@ -35,36 +31,29 @@ private:
     QPoint       dragStartPos;
     bool         dragging = false;
 
-    // ── Tabs ──────────────────────────────────────────────────────────────
     QTabWidget *tabs;
 
-    // Tab 1 — Subnetworks
     QLabel       *subnetSummaryLabel;
     QTableWidget *subnetTable;
-
-    // Tab 2 — Weighting
     CustomCheckBox *useCovCheck;
     QDoubleSpinBox *aPrioriSpin;
     QDoubleSpinBox *sigmaHSpin;
     QDoubleSpinBox *sigmaVSpin;
-
-    // ── Buttons ───────────────────────────────────────────────────────────
     QPushButton *cancelBtn;
     QPushButton *adjustBtn;
 
-    // ── Helpers ───────────────────────────────────────────────────────────
     void buildTitleBar();
     void buildSubnetworkTab();
     void buildWeightingTab();
     void populateSubnetworkTable();
 
     enum SubnetCol {
-        COL_CHECK  = 0,
-        COL_NAME   = 1,
-        COL_STNS   = 2,
-        COL_MODE   = 3,
+        COL_CHECK = 0,
+        COL_NAME = 1,
+        COL_STNS = 2,
+        COL_MODE = 3,
         COL_STATUS = 4,
-        COL_COUNT  = 5
+        COL_COUNT = 5
     };
 
 private slots:

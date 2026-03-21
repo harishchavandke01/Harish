@@ -31,6 +31,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     find_package(Qt6 REQUIRED COMPONENTS Widgets)
     find_package(Qt6 REQUIRED COMPONENTS Core)
     find_package(Qt6 REQUIRED COMPONENTS Widgets)
+    find_package(Qt6 REQUIRED COMPONENTS Core)
     find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets PrintSupport Charts Svg)
     find_package(Eigen3 CONFIG REQUIRED)
 
@@ -66,7 +67,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         Components/Workspace/NetworkAdjustment/networkadjustment.h Components/Workspace/NetworkAdjustment/networkadjustment.cpp
         Components/Context/projectcontext.h Components/Context/projectcontext.cpp
         Components/Workspace/NetworkAdjustment/FixStations/fixstations.h Components/Workspace/NetworkAdjustment/FixStations/fixstations.cpp
-        Components/Workspace/NetworkAdjustment/AdjustOptions/adjustoptions.h Components/Workspace/NetworkAdjustment/AdjustOptions/adjustoptions.cpp
+
         Components/Workspace/BaselineProcessing/RawDataCheckIn/rawdatacheckin.h Components/Workspace/BaselineProcessing/RawDataCheckIn/rawdatacheckin.cpp
         Components/Workspace/BaselineProcessing/StationReferenceSelection/stationreferenceselection.h Components/Workspace/BaselineProcessing/StationReferenceSelection/stationreferenceselection.cpp
         Components/Workspace/BaselineProcessing/TimeBasedView/timebasedview.h Components/Workspace/BaselineProcessing/TimeBasedView/timebasedview.cpp
@@ -74,6 +75,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         Components/Workspace/BaselineProcessing/GenerateReport/generateloopclosurereport.h Components/Workspace/BaselineProcessing/GenerateReport/generateloopclosurereport.cpp
         Components/Workspace/NetworkAdjustment/SubnetworkUtils/subnetworkutils.h Components/Workspace/NetworkAdjustment/SubnetworkUtils/subnetworkutils.cpp
         Components/Workspace/NetworkAdjustment/AdjustNetworkDialog/adjustnetworkdialog.h Components/Workspace/NetworkAdjustment/AdjustNetworkDialog/adjustnetworkdialog.cpp
+        backend/runnetworkadjustment.h backend/runnetworkadjustment.cpp
 
     )
 else()
@@ -116,6 +118,7 @@ target_link_libraries(SurveyPod PRIVATE Qt6::Core)
 target_link_libraries(SurveyPod PRIVATE Qt6::Widgets)
 target_link_libraries(SurveyPod PRIVATE Qt6::Core)
 target_link_libraries(SurveyPod PRIVATE Qt6::Widgets)
+target_link_libraries(SurveyPod PRIVATE Qt6::Core)
 # RTKLIB
 
 

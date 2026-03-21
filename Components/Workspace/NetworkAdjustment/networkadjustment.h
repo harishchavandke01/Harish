@@ -9,7 +9,7 @@
 #include <QSet>
 #include <QComboBox>
 #include "../../Context/projectcontext.h"
-#include "AdjustOptions/adjustoptions.h"
+#include "../../../Utils/customprogressbar.h"
 #include "../BaselineProcessing/ChartView/chartview.h"
 
 class NetworkAdjustment : public QWidget
@@ -45,6 +45,13 @@ private:
     QChart *chart;
     ChartView *chartView;
 
+    //thread
+    QVector<int> m_pendingSubnets;
+    int m_currentSubnetJob =0;
+    bool m_cancelRequested = false;
+    CustomProgressBar *m_adjustProgressBar = nullptr;
+
+
     void buildLeftPanel();
     void buildStatsCard();
     void connectSignals();
@@ -58,6 +65,8 @@ private:
     void showStatsForSubnet(int subnetIndex);
     void restoreStatsCard();
     void hideStatsCard();
+
+    void startNextSubnetJob();
 
 private slots:
     void onSetControlsClicked();
