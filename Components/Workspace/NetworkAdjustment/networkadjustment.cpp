@@ -795,9 +795,9 @@ void NetworkAdjustment::startNextSubnetJob()
     }
 
     if (m_currentSubnetJob >= m_pendingSubnets.size()) {
-        m_adjustProgressBar->setStatus("Adjustment complete.");
+        m_adjustProgressBar->setStatus("Adjustment completed.");
         m_adjustProgressBar->updateCurrent(m_pendingSubnets.size());
-        QTimer::singleShot(800, m_adjustProgressBar, &QWidget::close);
+        QTimer::singleShot(1000, m_adjustProgressBar, &QWidget::close);
 
         refreshSubnetCombo();
         int lastIdx = m_pendingSubnets.last();

@@ -129,16 +129,8 @@ void AdjustNetworkDialog::buildSubnetworkTab()
 
     populateSubnetworkTable();
 
-    QLabel *hintLabel = new QLabel(
-        "Check subnetworks to include in this adjustment run.\n"
-        "Mode is set automatically based on control points.");
-    hintLabel->setStyleSheet("color:#888; font-size:10px;");
-    hintLabel->setWordWrap(true);
-
     lay->addWidget(subnetSummaryLabel);
     lay->addWidget(subnetTable, 1);
-    lay->addWidget(hintLabel);
-
     tabs->addTab(page, "Subnetworks");
 }
 

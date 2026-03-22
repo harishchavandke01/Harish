@@ -19,19 +19,18 @@ public:
 
 private:
     // Title bar
-    QWidget     *topBar;
-    QLabel      *icon;
-    QLabel      *title;
+    QWidget *topBar;
+    QLabel *icon;
+    QLabel *title;
     QPushButton *closeBtn;
-    QPoint       dragStartPos;
-    bool         dragging = false;
+    QPoint dragStartPos;
+    bool dragging = false;
 
     // Content
-    QLabel       *heading;
-    QLabel       *infoLabel;
+    QLabel *heading;
     QTableWidget *table;
-    QPushButton  *saveBtn;
-    QPushButton  *resetBtn;
+    QPushButton *saveBtn;
+    QPushButton *resetBtn;
 
     ProjectContext *projectContext;
 

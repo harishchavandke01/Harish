@@ -25,15 +25,15 @@ private:
     AdjustmentOptions &options;
 
     QWidget*topBar;
-    QLabel      *iconLabel;
-    QLabel      *titleLabel;
+    QLabel  *iconLabel;
+    QLabel *titleLabel;
     QPushButton *closeBtn;
-    QPoint       dragStartPos;
-    bool         dragging = false;
+    QPoint dragStartPos;
+    bool dragging = false;
 
     QTabWidget *tabs;
 
-    QLabel       *subnetSummaryLabel;
+    QLabel *subnetSummaryLabel;
     QTableWidget *subnetTable;
     CustomCheckBox *useCovCheck;
     QDoubleSpinBox *aPrioriSpin;

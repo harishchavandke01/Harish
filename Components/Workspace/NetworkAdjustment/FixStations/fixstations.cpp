@@ -51,12 +51,6 @@ FixStations::FixStations(ProjectContext *_projectContext, QWidget *parent)
     heading = new QLabel("Control Points");
     heading->setStyleSheet("font-size:16px; font-weight:bold; border:none;");
 
-    infoLabel = new QLabel(
-        "Check a station to fix it as a control point.\n"
-        "If no stations are checked, a Free Network adjustment will run.");
-    infoLabel->setStyleSheet("font-size:10px; color:#666; border:none;");
-    infoLabel->setWordWrap(true);
-
     table = new QTableWidget();
     table->setColumnCount(COL_COUNT);
     table->setHorizontalHeaderLabels({
@@ -164,7 +158,6 @@ FixStations::FixStations(ProjectContext *_projectContext, QWidget *parent)
     contentLay->setContentsMargins(12, 12, 12, 12);
     contentLay->setSpacing(8);
     contentLay->addWidget(heading, 0, Qt::AlignHCenter);
-    contentLay->addWidget(infoLabel);
     contentLay->addWidget(table, 1);
     contentLay->addLayout(btnLay);
 
