@@ -17,7 +17,6 @@ BaselineProcessUI::BaselineProcessUI(ProjectContext * _projectContext, QMainWind
     leftWidget->setObjectName("BaselineLeftWidget");
     QVBoxLayout * llay = new QVBoxLayout(leftWidget);
     llay->setSpacing(8);
-    // llay->setAlignment(Qt::AlignCenter);
 
     heading = new QLabel("Baseline Process");
     heading->setObjectName("baselineHeading");

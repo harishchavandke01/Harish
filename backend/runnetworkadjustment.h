@@ -11,7 +11,8 @@ class RunNetworkAdjustment : public QObject
     Q_OBJECT
 public:
     explicit RunNetworkAdjustment(const SubnetworkInfo &info, const QMap<QString, ProjectStation>&stations,
-                                  const QVector<ProjectBaseline> &baselines, const AdjustmentOptions &options, QObject *parent = nullptr);
+                                  const QVector<ProjectBaseline> &baselines, const AdjustmentOptions &options,
+                                  QObject *parent = nullptr);
 
 public slots:
     void ExecuteAdjust();

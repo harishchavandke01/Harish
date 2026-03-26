@@ -91,7 +91,6 @@ void AdjustNetworkDialog::buildTitleBar()
     topBar->setFixedHeight(36);
 }
 
-
 void AdjustNetworkDialog::buildSubnetworkTab()
 {
     QWidget *page = new QWidget();
@@ -189,7 +188,7 @@ void AdjustNetworkDialog::populateSubnetworkTable()
             modeItem->setForeground(QBrush(QColor("#6c5ce7")));
         subnetTable->setItem(r, COL_MODE, modeItem);
 
-        auto *statusItem = new QTableWidgetItem( s.hasResult ? "✓  Adjusted" : "—");
+        auto *statusItem = new QTableWidgetItem( s.hasResult ? "✓  Adjusted" : " — ");
         statusItem->setTextAlignment(Qt::AlignCenter);
         statusItem->setForeground(s.hasResult ? QBrush(QColor("#00b894")) : QBrush(QColor("#b2bec3")));
         subnetTable->setItem(r, COL_STATUS, statusItem);
