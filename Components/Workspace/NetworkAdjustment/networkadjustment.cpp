@@ -424,7 +424,6 @@ void NetworkAdjustment::onReportClicked()
     const AdjustmentResult &ar = projectContext->adjustmentResult;
     if (ar.subnetworkResults.isEmpty()) return;
 
-    //  GenerateNetworkAdjustmentReport
     CustomMessageBox mb("INFO",
                         "Report generation will be implemented in a later phase.",
                         "OK", this);

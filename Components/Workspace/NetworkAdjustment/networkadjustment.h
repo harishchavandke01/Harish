@@ -20,8 +20,8 @@ public:
     explicit NetworkAdjustment(ProjectContext *_projectContext, QWidget*parent = nullptr);
 
 private:
-    ProjectContext    *projectContext;
-    AdjustmentOptions  adjOptions;
+    ProjectContext *projectContext;
+    AdjustmentOptions adjOptions;
 
     QWidget*leftWidget;
     QLabel *heading;

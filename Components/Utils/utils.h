@@ -8,13 +8,6 @@
 #include <QDir>
 #include <QJsonObject>
 
-// struct FileEntry {
-//     QString pointId;
-//     QString obs;
-//     QString nav;
-//     enum Role {Base, Rover } role;
-// };
-
 struct FileEntry {
     QString obs;
     QString nav;

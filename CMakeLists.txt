@@ -33,6 +33,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     find_package(Qt6 REQUIRED COMPONENTS Widgets)
     find_package(Qt6 REQUIRED COMPONENTS Core)
     find_package(Qt6 REQUIRED COMPONENTS Core)
+    find_package(Qt6 REQUIRED COMPONENTS Widgets)
     find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets PrintSupport Charts Svg)
     find_package(Eigen3 CONFIG REQUIRED)
 
@@ -78,6 +79,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         Components/Workspace/NetworkAdjustment/AdjustNetworkDialog/adjustnetworkdialog.h Components/Workspace/NetworkAdjustment/AdjustNetworkDialog/adjustnetworkdialog.cpp
         backend/runnetworkadjustment.h backend/runnetworkadjustment.cpp
         backend/lssolver.h backend/lssolver.cpp
+        Components/Workspace/BaselineProcessing/GenerateReport/generatenetworkadjustmentreport.h Components/Workspace/BaselineProcessing/GenerateReport/generatenetworkadjustmentreport.cpp
 
     )
 else()
@@ -122,6 +124,7 @@ target_link_libraries(SurveyPod PRIVATE Qt6::Core)
 target_link_libraries(SurveyPod PRIVATE Qt6::Widgets)
 target_link_libraries(SurveyPod PRIVATE Qt6::Core)
 target_link_libraries(SurveyPod PRIVATE Qt6::Core)
+target_link_libraries(SurveyPod PRIVATE Qt6::Widgets)
 # RTKLIB
 
 

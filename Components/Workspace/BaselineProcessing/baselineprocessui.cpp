@@ -349,8 +349,8 @@ void BaselineProcessUI::onProcessClicked()
 
                 radialJob.baseObs  = base.obs;
                 radialJob.roverObs = rover.obs;
-                radialJob.nav      = !base.nav.isEmpty() ? base.nav : rover.nav;
-                radialJob.outPos   = outDir + "/" + bInfo.completeBaseName() + "_" + rInfo.completeBaseName() + ".pos";
+                radialJob.nav = !base.nav.isEmpty() ? base.nav : rover.nav;
+                radialJob.outPos = outDir + "/" + bInfo.completeBaseName() + "_" + rInfo.completeBaseName() + ".pos";
                 radialJob.baseStart = bST;
                 radialJob.baseEnd = bET;
                 radialJob.roverStart = rST;
@@ -1163,6 +1163,12 @@ void BaselineProcessUI::onDockItemClicked(QListWidgetItem *item)
 void BaselineProcessUI::onPointClickedOnChart(const QStringList &uids)
 {
     QString uid = uids.first();
+    for(auto &file: files){
+        if(file.obs == uid){
+            uid = file.pointId;
+            break;
+        }
+    }
     for (int i = 0; i < dockList->count(); ++i) {
         QListWidgetItem *item = dockList->item(i);
         if (!item)

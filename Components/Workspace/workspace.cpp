@@ -69,7 +69,6 @@ void Workspace::setUpMenuBar()
 
 void Workspace::setProjectFolder(const QString &_projectFolder)
 {
-    qDebug()<<_projectFolder;
     projectFolder=_projectFolder;
     rinex->setProjectFolder(projectFolder);
     process->setProjectFolder(projectFolder);

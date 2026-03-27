@@ -125,7 +125,7 @@ private:
     QTimer *m_tooltipHideTimer = nullptr;
 
     QMap<QString, ProjectStation> m_stationCache;
-    QMap<QString, QStringList>    m_pointToIds;
+    QMap<QString, QStringList> m_pointToIds;
 
     QString pointKey(const QPointF &p, int prec = 5) const;
 
