@@ -1131,6 +1131,7 @@ void BaselineProcessUI::setProjectContextData()
         bl.rms = pd.RMS;
         bl.sigma0 = pd.sigma0;
         bl.dof = pd.dof;
+        bl.baselineId = bl.fromStationId + " -> " +bl.toStationId;
         projectContext->baselines.append(bl);
     }
     for (auto it = projectContext->stations.begin(); it != projectContext->stations.end(); ++it) {

@@ -5,6 +5,7 @@
 #include <QFormLayout>
 #include <QScrollArea>
 #include "../SubnetworkUtils/subnetworkutils.h"
+#include "../CovarianceMatrix/covariancematrix.h"
 
 AdjustNetworkDialog::AdjustNetworkDialog(ProjectContext *ctx, AdjustmentOptions &opts, QWidget *parent): QDialog(parent), projectContext(ctx), options(opts)
 {
@@ -204,14 +205,6 @@ void AdjustNetworkDialog::buildWeightingTab()
 
     useCovCheck = new CustomCheckBox("Use baseline covariance matrices", options.useCovariance);
 
-    QLabel *covNote = new QLabel(
-        "When checked: the full 3×3 ECEF covariance from baseline "
-        "processing is used as the weight matrix.\n"
-        "When unchecked: a diagonal weight matrix is built from the "
-        "fallback sigma values below. Cross-correlations are ignored.\n"
-        "Use this to diagnose whether covariance distorts the solution.");
-    covNote->setWordWrap(true);
-    covNote->setStyleSheet("color:#888; font-size:10px; padding-left:4px;");
 
     QLabel *aPrioriLabel = new QLabel("A priori scalar:");
     aPrioriLabel->setStyleSheet("font-size:12px;");
@@ -226,14 +219,6 @@ void AdjustNetworkDialog::buildWeightingTab()
         "1.000 = use as-is (recommended).\n"
         "Increase to trust observations more than their stated precision.");
 
-    QLabel *aPrioriNote = new QLabel( "Scales all weights uniformly. Keep at 1.000 unless you have " "a specific reason to re-weight.");
-    aPrioriNote->setWordWrap(true);
-    aPrioriNote->setStyleSheet("color:#888; font-size:10px;");
-
-    QLabel *sigmaTitle = new QLabel("Fallback standard deviations (used when covariance is unchecked or unavailable):");
-    sigmaTitle->setWordWrap(true);
-    sigmaTitle->setStyleSheet("font-size:11px; color:#555;");
-
     QLabel *sigmaHLabel = new QLabel("Horizontal σ:");
     sigmaHLabel->setStyleSheet("font-size:12px;");
     sigmaHSpin = new QDoubleSpinBox();
@@ -242,7 +227,7 @@ void AdjustNetworkDialog::buildWeightingTab()
     sigmaHSpin->setDecimals(4);
     sigmaHSpin->setSuffix("  m");
     sigmaHSpin->setValue(options.defaultSigmaH);
-    sigmaHSpin->setFixedWidth(120);
+    sigmaHSpin->setFixedWidth(100);
     sigmaHSpin->setToolTip("Fallback horizontal precision for ECEF X and Y components.");
 
     QLabel *sigmaVLabel = new QLabel("Vertical σ:");
@@ -253,23 +238,21 @@ void AdjustNetworkDialog::buildWeightingTab()
     sigmaVSpin->setDecimals(4);
     sigmaVSpin->setSuffix("  m");
     sigmaVSpin->setValue(options.defaultSigmaV);
-    sigmaVSpin->setFixedWidth(120);
+    sigmaVSpin->setFixedWidth(100);
     sigmaVSpin->setToolTip("Fallback vertical precision for ECEF Z component.");
 
-    QFormLayout *form = new QFormLayout();
-    form->setContentsMargins(0, 0, 0, 0);
-    form->setSpacing(10);
-    form->setLabelAlignment(Qt::AlignRight);
-    form->addRow(aPrioriLabel, aPrioriSpin);
-    form->addRow(aPrioriNote);
-    form->addRow(sigmaTitle);
-    form->addRow(sigmaHLabel, sigmaHSpin);
-    form->addRow(sigmaVLabel, sigmaVSpin);
+    QHBoxLayout * hlay1 = new QHBoxLayout();
+    hlay1->setContentsMargins(0,0,0,0);
+    hlay1->addWidget(aPrioriLabel);
+    hlay1->addWidget(aPrioriSpin);
+    hlay1->addWidget(sigmaHLabel);
+    hlay1->addWidget(sigmaHSpin);
+    hlay1->addWidget(sigmaVLabel);
+    hlay1->addWidget(sigmaVSpin);
 
     outerLay->addWidget(useCovCheck);
-    outerLay->addWidget(covNote);
     outerLay->addSpacing(6);
-    outerLay->addLayout(form);
+    outerLay->addLayout(hlay1);
     outerLay->addStretch();
 
     tabs->addTab(page, "Weighting");
@@ -303,7 +286,12 @@ void AdjustNetworkDialog::onAdjustClicked()
     options.aPrioriScalar  = aPrioriSpin->value();
     options.defaultSigmaH  = sigmaHSpin->value();
     options.defaultSigmaV  = sigmaVSpin->value();
-    accept();
+
+    CovarianceMatrix *cvmat = new CovarianceMatrix(projectContext);
+    int result = cvmat->exec();
+    if (result == QDialog::Accepted) {
+        accept();
+    }
 }
 
 void AdjustNetworkDialog::onCancelClicked()

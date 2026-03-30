@@ -1566,51 +1566,51 @@ extern int postpos(gtime_t ts, gtime_t te, double ti, double tu,
 
               fclose(fp);
 
-            // //   BatchLS_Result_t *res = &_s->result;
-            //   int _i, _j;
-            //   fprintf(stderr,
-            //       "\n========================================\n"
-            //       "  A Posteriori Covariance Matrix\n"
-            //       "========================================\n");
-            //     fprintf(stderr,"  n_obs        = %d\n", res->n_obs);
-            //     fprintf(stderr,"  n_phase      = %d\n", res->n_phase);
-            //     fprintf(stderr,"  n_param      = %d\n", res->n_param);
-            //     fprintf(stderr,"  DOF          = %d\n", res->dof);
-            //     fprintf(stderr,"  sigma0       = %.6f  \n",
-            //             res->sigma0);
+            //   BatchLS_Result_t *res = &_s->result;
+              int _i, _j;
+              fprintf(stderr,
+                  "\n========================================\n"
+                  "  A Posteriori Covariance Matrix\n"
+                  "========================================\n");
+                fprintf(stderr,"  n_obs        = %d\n", res->n_obs);
+                fprintf(stderr,"  n_phase      = %d\n", res->n_phase);
+                fprintf(stderr,"  n_param      = %d\n", res->n_param);
+                fprintf(stderr,"  DOF          = %d\n", res->dof);
+                fprintf(stderr,"  sigma0       = %.6f  \n",
+                        res->sigma0);
 
-            //     /* --- Baseline block Cbb from full Cxx --- */
-            //     fprintf(stderr,
-            //         "\n  Float baseline block Cbb [3x3]:\n"
-            //         "         dX              dY              dZ\n");
-            //     for (_i = 0; _i < 3; _i++) {
-            //         fprintf(stderr,"  ");
-            //         for (_j = 0; _j < 3; _j++)
-            //             fprintf(stderr,"% .15f  ",
-            //                     res->Cxx[_i * res->n_param + _j]);
-            //         fprintf(stderr,"\n");
-            //     }
-            //     /* --- Fixed C_fixed [3x3] --- */
-            //     if (_s->ready) {
-            //         fprintf(stderr,
-            //             "\n  Fixed C_fixed [3x3]  \n"
-            //             "         dX              dY              dZ\n");
-            //         for (_i = 0; _i < 3; _i++) {
-            //             fprintf(stderr,"  ");
-            //             for (_j = 0; _j < 3; _j++)
-            //                 fprintf(stderr,"% .15f  ",
-            //                         res->C_fixed[_i*3+_j]);
-            //             fprintf(stderr,"\n");
-            //         }
-            //         fprintf(stderr,"\n");
-            //     } else {
-            //         fprintf(stderr,"  [fix_cov not ready]\n");
-            //     }
-            //     fprintf(stderr,
-            //         "========================================\n\n");
-            // } else {
-            //     fprintf(stderr,"[batchls] solve failed: status=%d"
-            //                    "  n_obs=%d\n", bstat, _s->acc.n_obs);
+                /* --- Baseline block Cbb from full Cxx --- */
+                fprintf(stderr,
+                    "\n  Float baseline block Cbb [3x3]:\n"
+                    "         dX              dY              dZ\n");
+                for (_i = 0; _i < 3; _i++) {
+                    fprintf(stderr,"  ");
+                    for (_j = 0; _j < 3; _j++)
+                        fprintf(stderr,"% .15f  ",
+                                res->Cxx[_i * res->n_param + _j]);
+                    fprintf(stderr,"\n");
+                }
+                /* --- Fixed C_fixed [3x3] --- */
+                if (_s->ready) {
+                    fprintf(stderr,
+                        "\n  Fixed C_fixed [3x3]  \n"
+                        "         dX              dY              dZ\n");
+                    for (_i = 0; _i < 3; _i++) {
+                        fprintf(stderr,"  ");
+                        for (_j = 0; _j < 3; _j++)
+                            fprintf(stderr,"% .15f  ",
+                                    res->C_fixed[_i*3+_j]);
+                        fprintf(stderr,"\n");
+                    }
+                    fprintf(stderr,"\n");
+                } else {
+                    fprintf(stderr,"  [fix_cov not ready]\n");
+                }
+                fprintf(stderr,
+                    "========================================\n\n");
+            } else {
+                fprintf(stderr,"[batchls] solve failed: status=%d"
+                               "  n_obs=%d\n", bstat, _s->acc.n_obs);
             }
             }
           }

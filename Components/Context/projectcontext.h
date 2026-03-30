@@ -203,6 +203,12 @@ struct AdjustmentOptions {
     double aPrioriScalar = 1.0;
     double defaultSigmaH = 0.010;
     double defaultSigmaV  = 0.020;
+    double xx;
+    double xy;
+    double xz;
+    double yy;
+    double yz;
+    double zz;
 };
 
 class ProjectContext : public QObject {
