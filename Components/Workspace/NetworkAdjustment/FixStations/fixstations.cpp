@@ -171,7 +171,7 @@ FixStations::FixStations(ProjectContext *_projectContext, QWidget *parent)
     mainLay->addWidget(contentWidget, 1);
     setLayout(mainLay);
 
-    connect(saveBtn,  &QPushButton::clicked, this, &FixStations::onSave);
+    connect(saveBtn, &QPushButton::clicked, this, &FixStations::onSave);
     connect(resetBtn, &QPushButton::clicked, this, &FixStations::onReset);
     populateTable();
 }
