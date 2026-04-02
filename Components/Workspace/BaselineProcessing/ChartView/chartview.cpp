@@ -226,7 +226,7 @@ void ChartView::clearAdjustedOverlay()
 void ChartView::drawChartAdjusted(
     const QMap<QString, ProjectStation> &stations,
     const QVector<ProjectBaseline> &baselines,
-    const QMap<QString, QVector3D> &adjustedECEF)
+    const QMap<QString, Vector3d64> &adjustedECEF)
 {
     if (adjustedECEF.isEmpty()) {
         drawChart(stations, baselines);
@@ -248,12 +248,12 @@ void ChartView::drawChartAdjusted(
             continue;
         }
 
-        const QVector3D &adj = adjustedECEF[uid];
+        const Vector3d64 &adj = adjustedECEF[uid];
         double latR = qDegreesToRadians(st.geo.lat);
         double lonR = qDegreesToRadians(st.geo.lon);
-        double dX = adj.x() - st.ecef.X;
-        double dY = adj.y() - st.ecef.Y;
-        double dZ = adj.z() - st.ecef.Z;
+        double dX = adj.x - st.ecef.X;
+        double dY = adj.y - st.ecef.Y;
+        double dZ = adj.z - st.ecef.Z;
         double dE = -sin(lonR)*dX + cos(lonR)*dY;
         double dN = -sin(latR)*cos(lonR)*dX
                     - sin(latR)*sin(lonR)*dY

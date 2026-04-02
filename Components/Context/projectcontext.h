@@ -122,13 +122,25 @@ struct StationPrecision {
     double vertPrecision95 = NAN;
 };
 
+struct Vector3d64 {
+    double x = 0.0;
+    double y = 0.0;
+    double z = 0.0;
+
+    Vector3d64() {}
+    Vector3d64(double _x, double _y, double _z) : x(_x), y(_y), z(_z) {}
+};
+
 struct SubnetworkResult {
     int subnetworkIndex = 0;
     bool success = false;
     bool constrained = true;
     bool usedCovariance = true;
-    QMap<QString, QVector3D> adjustedECEF;
-    QMap<QString, QVector3D> stationCorrections;
+    // QMap<QString, QVector3D> adjustedECEF;
+    // QMap<QString, QVector3D> stationCorrections;
+
+    QMap<QString, Vector3d64> adjustedECEF;
+    QMap<QString, Vector3d64> stationCorrections;
 
     QMap<QString, StationPrecision> stationPrecisions;
 
@@ -151,10 +163,11 @@ struct SubnetworkResult {
     QDateTime adjustedAt;
 };
 
+
 struct AdjustmentResult {
     QMap<int, SubnetworkResult> subnetworkResults;
     int activeSubnetworkIndex = -1;
-    QMap<QString, QVector3D> mergedAdjustedECEF;
+    QMap<QString, Vector3d64> mergedAdjustedECEF;
 
     bool anySuccess() const {
         for (auto it = subnetworkResults.constBegin();
@@ -171,8 +184,7 @@ struct AdjustmentResult {
     void storeSubnetworkResult(const SubnetworkResult &r) {
         subnetworkResults[r.subnetworkIndex] = r;
         if (r.success) {
-            for (auto it = r.adjustedECEF.constBegin();
-                 it != r.adjustedECEF.constEnd(); ++it)
+            for (auto it = r.adjustedECEF.constBegin(); it != r.adjustedECEF.constEnd(); ++it)
                 mergedAdjustedECEF[it.key()] = it.value();
             activeSubnetworkIndex = r.subnetworkIndex;
         }
@@ -181,8 +193,9 @@ struct AdjustmentResult {
     bool success = false;
     bool constrained = true;
     bool usedCovariance = true;
-    QMap<QString, QVector3D> adjustedECEF;
-    QMap<QString, QVector3D> stationCorrections;
+
+    QMap<QString, Vector3d64> adjustedECEF;
+    QMap<QString, Vector3d64> stationCorrections;
     struct LegacyResidual { QString base, rover; double vX, vY, vZ, vNorm; };
     QVector<LegacyResidual> residuals;
     double sigma0 = NAN;

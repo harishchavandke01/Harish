@@ -4,7 +4,7 @@
 #include <QObject>
 #include <QMap>
 #include <QVector>
-#include "../../../Context/projectcontext.h"
+#include "../Components/Context/projectcontext.h"
 
 class RunNetworkAdjustment : public QObject
 {

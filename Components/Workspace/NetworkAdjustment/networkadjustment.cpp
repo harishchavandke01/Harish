@@ -220,8 +220,7 @@ void NetworkAdjustment::refreshSubnetCombo()
     subnetCombo->blockSignals(true);
     subnetCombo->clear();
 
-    for (auto it = ar.subnetworkResults.constBegin();
-         it != ar.subnetworkResults.constEnd(); ++it) {
+    for (auto it = ar.subnetworkResults.constBegin();it != ar.subnetworkResults.constEnd(); ++it) {
         const SubnetworkResult &r = it.value();
         QString label = QString("Subnetwork %1  (%2)").arg(r.subnetworkIndex).arg(r.constrained ? "Constrained" : "Free");
         subnetCombo->addItem(label, r.subnetworkIndex);
@@ -243,6 +242,7 @@ void NetworkAdjustment::showStatsForSubnet(int subnetIndex)
 {
     if (!projectContext) return;
     const AdjustmentResult &ar = projectContext->adjustmentResult;
+
     if (!ar.subnetworkResults.contains(subnetIndex)) return;
 
     const SubnetworkResult &r = ar.subnetworkResults[subnetIndex];

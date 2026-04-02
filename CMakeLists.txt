@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.16)
 
 project(SurveyPod VERSION 0.1 LANGUAGES CXX)
 
+add_definitions(-DNOMINMAX)
+
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
@@ -35,6 +37,10 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     find_package(Qt6 REQUIRED COMPONENTS Core)
     find_package(Qt6 REQUIRED COMPONENTS Widgets)
     find_package(Qt6 REQUIRED COMPONENTS Widgets)
+    find_package(Qt6 REQUIRED COMPONENTS Core)
+    find_package(Qt6 REQUIRED COMPONENTS Core)
+    find_package(Qt6 REQUIRED COMPONENTS Core)
+    find_package(Qt6 REQUIRED COMPONENTS Core)
     find_package(Qt6 REQUIRED COMPONENTS Core)
     find_package(Qt6 REQUIRED COMPONENTS Core)
     find_package(Qt6 REQUIRED COMPONENTS Core)
@@ -86,10 +92,14 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         backend/lssolver.h backend/lssolver.cpp
         Components/Workspace/BaselineProcessing/GenerateReport/generatenetworkadjustmentreport.h Components/Workspace/BaselineProcessing/GenerateReport/generatenetworkadjustmentreport.cpp
         Components/Workspace/NetworkAdjustment/CovarianceMatrix/covariancematrix.h Components/Workspace/NetworkAdjustment/CovarianceMatrix/covariancematrix.cpp
-        backend/aprioriestimator.h backend/aprioriestimator.cpp
-        backend/matrixbuilder.h backend/matrixbuilder.cpp
-        backend/eigenwrapper.h backend/eigenwrapper.cpp
-        backend/statisticaltests.h backend/statisticaltests.cpp
+
+
+
+
+
+
+
+
 
     )
 else()
@@ -136,6 +146,10 @@ target_link_libraries(SurveyPod PRIVATE Qt6::Core)
 target_link_libraries(SurveyPod PRIVATE Qt6::Core)
 target_link_libraries(SurveyPod PRIVATE Qt6::Widgets)
 target_link_libraries(SurveyPod PRIVATE Qt6::Widgets)
+target_link_libraries(SurveyPod PRIVATE Qt6::Core)
+target_link_libraries(SurveyPod PRIVATE Qt6::Core)
+target_link_libraries(SurveyPod PRIVATE Qt6::Core)
+target_link_libraries(SurveyPod PRIVATE Qt6::Core)
 target_link_libraries(SurveyPod PRIVATE Qt6::Core)
 target_link_libraries(SurveyPod PRIVATE Qt6::Core)
 target_link_libraries(SurveyPod PRIVATE Qt6::Core)

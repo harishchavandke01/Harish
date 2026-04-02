@@ -93,7 +93,7 @@ public:
     ~ChartView() override;
 
     void drawChart(const QMap<QString, ProjectStation> &stations, const QVector<ProjectBaseline> &baselines);
-    void drawChartAdjusted(const QMap<QString, ProjectStation> &stations, const QVector<ProjectBaseline> &baselines, const QMap<QString, QVector3D>&adjustedECEF);
+    void drawChartAdjusted(const QMap<QString, ProjectStation> &stations, const QVector<ProjectBaseline> &baselines, const QMap<QString, Vector3d64>&adjustedECEF);
 
 public slots:
     void highlightStation(const QString &uid);
