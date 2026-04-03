@@ -151,7 +151,7 @@ void NetworkAdjustment::buildStatsCard()
     subnetCombo->setToolTip("Select subnetwork");
 
     statType = new QLabel("Type: —");
-    statSigma0 = new QLabel("σ₀: —");
+    statSigma0 = new QLabel("Reference: —");
     statDof = new QLabel("DOF: —");
     statRms = new QLabel("RMS: —");
     statResult = new QLabel("—");

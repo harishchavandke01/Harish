@@ -1,6 +1,3 @@
-// ==========================================
-// ☣️ QUARANTINE RTKLIB & WINDOWS MACROS ☣️
-// ==========================================
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
@@ -12,7 +9,6 @@
 #undef cross
 #undef mat
 #undef round
-// ==========================================
 
 #include "lssolver.h"
 #include <cmath>
@@ -56,13 +52,6 @@ void LSSolver::buildCanonicalMap()
         if (m_stations.contains(uid) && !m_stations[uid].isFixed)
             m_freeIdx[uid] = m_nFree++;
     }
-
-    qDebug() << "===== FREE STATIONS =====";
-    for (auto it = m_freeIdx.begin(); it != m_freeIdx.end(); ++it) {
-        qDebug() << "UID:" << it.key() << "Index:" << it.value();
-    }
-    qDebug() << "Total free stations:" << m_nFree;
-    qDebug() << "=========================";
 }
 
 void LSSolver::initPositions()
@@ -78,24 +67,16 @@ void LSSolver::initPositions()
 
 void LSSolver::filterBaselines()
 {
-    for (const ProjectBaseline &bl : m_baselines) {
-        if (bl.from == bl.to) continue; // Skip identical IDs
+    for (ProjectBaseline &bl : m_baselines) {
+        if (bl.from == bl.to) continue;
 
         QString fromC = m_uidToCanonical.value(bl.from, bl.from);
-        QString toC   = m_uidToCanonical.value(bl.to,   bl.to);
+        QString toC = m_uidToCanonical.value(bl.to, bl.to);
 
         if (!m_pos.contains(fromC) || !m_pos.contains(toC)) continue;
-        if (fromC == toC) continue; // Skip self-loops after alias resolution
+        if (fromC == toC) continue;
 
-        // FIX: Removed the "seen" set filter to allow repeated observations of the same baseline
         m_active.append(bl);
-
-        qDebug() << "===== ACTIVE BASELINES =====";
-        for (const auto &bl : m_active) {
-            qDebug() << bl.from << " -> " << bl.to;
-        }
-        qDebug() << "Total baselines:" << m_active.size();
-        qDebug() << "============================";
     }
 }
 
@@ -119,7 +100,7 @@ Eigen::Matrix3d LSSolver::weightBlock(const ProjectBaseline &bl) const
                 C(i, j) = m_options.aPrioriScalar * bl.cov[i][j];
         return C.inverse();
     }
-    // Fallback: diagonal weight from default sigmas.
+
     double wH = 1.0 / (m_options.aPrioriScalar * m_options.defaultSigmaH * m_options.defaultSigmaH);
     double wV = 1.0 / (m_options.aPrioriScalar * m_options.defaultSigmaV * m_options.defaultSigmaV);
     Eigen::Matrix3d W = Eigen::Matrix3d::Zero();
@@ -140,10 +121,10 @@ void LSSolver::buildSystem(const QVector<ProjectBaseline> &baselines, Eigen::Mat
         const ProjectBaseline &bl = baselines[k];
         int row = k * 3;
         QString fromC = m_uidToCanonical.value(bl.from, bl.from);
-        QString toC   = m_uidToCanonical.value(bl.to,   bl.to);
+        QString toC = m_uidToCanonical.value(bl.to, bl.to);
 
         Eigen::Vector3d pos_from = m_pos.value(fromC, Eigen::Vector3d::Zero());
-        Eigen::Vector3d pos_to   = m_pos.value(toC, Eigen::Vector3d::Zero());
+        Eigen::Vector3d pos_to = m_pos.value(toC, Eigen::Vector3d::Zero());
 
         Eigen::Vector3d obs(bl.dX, bl.dY, bl.dZ);
         w.segment(row, 3) = obs - (pos_to - pos_from);
@@ -175,6 +156,11 @@ bool LSSolver::runInnerLoop(Eigen::VectorXd &dx_final, Eigen::MatrixXd &N_inv, E
         Eigen::VectorXd w;
         Eigen::MatrixXd P;
         buildSystem(m_active, A, w, P);
+
+        qDebug()<<"\n\nLoop closure vector :";
+        for(int i=0;i< w.size();i++){
+            qDebug()<<w[i]<<" ";
+        }
 
         Eigen::MatrixXd N = A.transpose() * P * A;
         Eigen::VectorXd c = A.transpose() * P * w;
@@ -233,9 +219,7 @@ double LSSolver::tauCritical(int dof) const
     return 1.96 * std::sqrt(d / (d + 0.26 * 1.96 * 1.96));
 }
 
-void LSSolver::propagatePrecisions(const Eigen::MatrixXd &N_inv,
-                                   double sigma0_sq,
-                                   SubnetworkResult &result) const
+void LSSolver::propagatePrecisions(const Eigen::MatrixXd &N_inv, double sigma0_sq, SubnetworkResult &result) const
 {
     for (auto it = m_freeIdx.constBegin(); it != m_freeIdx.constEnd(); ++it) {
         const QString &uid = it.key();
@@ -340,13 +324,6 @@ SubnetworkResult LSSolver::solve()
         int n_unknowns = m_nFree * 3;
         int dof = n_obs - n_unknowns;
 
-        qDebug() << "===== LSQ STATS =====";
-        qDebug() << "Baselines:" << m_active.size();
-        qDebug() << "Observations:" << n_obs;
-        qDebug() << "Unknowns:" << n_unknowns;
-        qDebug() << "DOF:" << dof;
-        qDebug() << "=====================";
-
         m_log.append(QString("Outer iteration %1: %2 baselines, DOF=%3").arg(outer + 1).arg(m_active.size()).arg(dof));
 
         if (dof < 0) {
@@ -364,25 +341,20 @@ SubnetworkResult LSSolver::solve()
             m_log.append("Inner loop did not fully converge (max iterations reached).");
 
         Eigen::VectorXd v;
-
-        // FIX: The residual vector v is always exactly -w_final since w_final is already computed using the updated coordinates
         v = -w_final;
 
         double vtpv = 0.0;
-        double sum_v2 = 0.0; // Track pure physical residuals for RMS
+        double sum_v2 = 0.0;
         for (int k = 0; k < m_active.size(); ++k) {
             Eigen::Vector3d vk = v.segment(k * 3, 3);
             Eigen::Matrix3d Pk = P_final.block(k * 3, k * 3, 3, 3);
             vtpv += (double)(vk.transpose() * Pk * vk);
-            sum_v2 += vk.squaredNorm(); // Physical distance squared
-        }
+            sum_v2 += vk.squaredNorm();         }
 
         double sigma0 = (dof > 0) ? std::sqrt(vtpv / dof) : 0.0;
         double sigma0_sq = sigma0 * sigma0;
 
-        // Calculate true Physical RMS in meters
         double rms3D = (n_obs > 0) ? std::sqrt(sum_v2 / n_obs) : 0.0;
-
         m_log.append(QString("  σ₀ = %1  vᵀPv = %2  DOF = %3").arg(sigma0, 0, 'f', 4).arg(vtpv, 0, 'f', 4).arg(dof));
 
         bool chi_passed = false;
@@ -393,17 +365,15 @@ SubnetworkResult LSSolver::solve()
             m_log.append(QString("  χ² bounds [%1, %2]  vᵀPv=%3  → %4").arg(lo, 0, 'f', 3).arg(hi, 0, 'f', 3).arg(vtpv, 0, 'f', 4).arg(chi_passed ? "PASSED" : "FAILED"));
         }
 
-        //  Cofactor matrix of residuals (for tau test)
         Eigen::MatrixXd Q_vv = Eigen::MatrixXd::Zero(n_obs, n_obs);
         for (int k = 0; k < m_active.size(); ++k) {
             Eigen::Matrix3d Pk = P_final.block(k * 3, k * 3, 3, 3);
-            Q_vv.block(k * 3, k * 3, 3, 3) = Pk.inverse();  // Q_ll diagonal block
+            Q_vv.block(k * 3, k * 3, 3, 3) = Pk.inverse();
         }
         if (m_nFree > 0) {
             Q_vv -= A_final * N_inv * A_final.transpose();
         }
 
-        //  Tau test
         if (dof <= 0) {
             m_log.append("  DOF=0: tau test skipped.");
             result.sigma0 = sigma0;
@@ -420,7 +390,7 @@ SubnetworkResult LSSolver::solve()
         double tau_crit = tauCritical(dof);
         m_log.append(QString("  τ_crit = %1  (DOF=%2)").arg(tau_crit, 0, 'f', 3).arg(dof));
 
-        int    worst_k    = -1;
+        int worst_k = -1;
         double worst_tau  = 0.0;
 
         for (int k = 0; k < m_active.size(); ++k) {
@@ -438,60 +408,44 @@ SubnetworkResult LSSolver::solve()
         }
 
         bool tau_pass = (worst_tau <= tau_crit);
-        m_log.append(QString("  Max |τ| = %1 (baseline %2) → %3")
+        m_log.append(QString("  Max (tau) = %1 (baseline %2) → %3")
                          .arg(worst_tau, 0, 'f', 3)
-                         .arg(worst_k >= 0 ? m_active[worst_k].fromStationId
-                                                 + "→" + m_active[worst_k].toStationId
-                                           : "—")
+                         .arg(worst_k >= 0 ? m_active[worst_k].fromStationId + "→" + m_active[worst_k].toStationId : "—")
                          .arg(tau_pass ? "PASS" : "FAIL"));
 
         if (tau_pass || outer == MAX_OUTER - 1) {
-            // All tau tests pass (or we've exhausted outer iterations).
-            result.sigma0          = sigma0;
-            result.rms3D           = rms3D;
+            result.sigma0 = sigma0;
+            result.rms3D = rms3D;
             result.chiSquareValue  = vtpv;
-            result.dof             = dof;
+            result.dof = dof;
             result.chiSquarePassed = chi_passed;
-            result.success         = true;
+            result.success = true;
             populateResult(v, P_final, Q_vv, m_active, sigma0, dof, result);
             propagatePrecisions(N_inv, sigma0_sq, result);
             break;
         }
 
-        // Remove the worst baseline and restart the outer loop.
-        QString removed = m_active[worst_k].fromStationId
-                          + " → " + m_active[worst_k].toStationId;
-        m_log.append(QString("  Removing baseline %1 (|τ|=%2 > %3), restarting.")
-                         .arg(removed).arg(worst_tau, 0, 'f', 3).arg(tau_crit, 0, 'f', 3));
+        QString removed = m_active[worst_k].fromStationId + " → " + m_active[worst_k].toStationId;
+        m_log.append(QString(" Removing baseline %1 (|(tau)|=%2 > %3), restarting.").arg(removed).arg(worst_tau, 0, 'f', 3).arg(tau_crit, 0, 'f', 3));
         m_active.remove(worst_k);
-
-        // Guard: if we've removed too many baselines DOF would go negative.
         int new_dof = (m_active.size() * 3) - (m_nFree * 3);
         if (new_dof < 0) {
-            m_log.append("  Removing further baselines would leave DOF < 0 — stopping.");
+            m_log.append("Removing further baselines would leave DOF < 0 — stopping.");
             break;
         }
     }
 
-    // ── Write adjusted positions into result ──────────────────────────────────
     if (result.success) {
         for (auto it = m_canonicalUid.constBegin(); it != m_canonicalUid.constEnd(); ++it) {
             const QString &uid = it.value();
             if (!m_pos.contains(uid)) continue;
 
             const Eigen::Vector3d &pos = m_pos[uid];
-            QVector3D ecef_f(static_cast<float>(pos.x()),
-                             static_cast<float>(pos.y()),
-                             static_cast<float>(pos.z()));
-
-            // Write to ALL uids that share this station (aliases).
             for (auto ait = m_uidToCanonical.constBegin();
                  ait != m_uidToCanonical.constEnd(); ++ait) {
                 if (ait.value() == uid) {
-                    // result.adjustedECEF[ait.key()] = ecef_f;
-                    result.adjustedECEF[ait.key()] = Vector3d64(pos.x(), pos.y(), pos.z());
 
-                    // Correction vector (canonical initial vs final).
+                    result.adjustedECEF[ait.key()] = Vector3d64(pos.x(), pos.y(), pos.z());
                     if (pos_initial.contains(uid)) {
                         Eigen::Vector3d corr = pos - pos_initial[uid];
                         result.stationCorrections[ait.key()] = Vector3d64(corr.x(), corr.y(), corr.z());
@@ -500,7 +454,6 @@ SubnetworkResult LSSolver::solve()
             }
         }
     }
-
     result.iterationLog = m_log;
     return result;
 }
