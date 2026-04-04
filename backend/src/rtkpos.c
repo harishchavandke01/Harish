@@ -1437,24 +1437,41 @@ static int ddres(rtk_t *rtk, const obsd_t *obs, double dt, const double *x,
     if (H) {trace(5,"H=\n"); tracemat(5,H,rtk->nx,nv,7,4);}
 
     /* double-differenced measurement error covariance */
+    // ddcov(nb,b,Ri,Rj,nv,R);
+    // {
+    //   BatchLS_Session_t *_s = rtkpos_get_session();
+    //   if (_s != NULL && nv > 0) {
+    //       int    _i;
+    //       double R_diag[MAXOBS*2];
+
+    //       /* Extract diagonal of R.
+    //        * R is [nv x nv] column-major in RTKlib.
+    //        * Diagonal element i = R[i + i*nv] */
+    //       for (_i = 0; _i < nv; _i++)
+    //           R_diag[_i] = R[_i + _i * nv];
+
+    //   /* Pass vflg so batchls can identify phase vs code.
+    //        * vflg low nibble: 0=phase, 1=code */
+    //       batchls_append(_s, H, v, R_diag, vflg, nv, rtk->nx);
+    //   }
+    // }
+
     ddcov(nb,b,Ri,Rj,nv,R);
-      {
+    {
         BatchLS_Session_t *_s = rtkpos_get_session();
         if (_s != NULL && nv > 0) {
-            int    _i;
-            double R_diag[MAXOBS*2];
-
-            /* Extract diagonal of R.
-             * R is [nv x nv] column-major in RTKlib.
-             * Diagonal element i = R[i + i*nv] */
-            for (_i = 0; _i < nv; _i++)
-                R_diag[_i] = R[_i + _i * nv];
-
-            /* Pass vflg so batchls can identify phase vs code.
-             * vflg low nibble: 0=phase, 1=code */
-            batchls_append(_s, H, v, R_diag, vflg, nv, rtk->nx);
+            /* H is [nv x nx] row-major (each row = one DD obs)
+             * v is [nv]
+             * R is [nv x nv] column-major (from ddcov)
+             * vflg is [nv] with bit4: 0=phase, 1=code
+             *
+             * Pass the FULL R matrix — batchls_accumulate() will
+             * invert it and accumulate N += H' R^{-1} H per epoch.
+             */
+            batchls_accumulate(_s, H, v, R, vflg, nv, rtk->nx);
         }
     }
+
 
     free(Ri); free(Rj); free(im);
     free(tropu); free(tropr); free(dtdxu); free(dtdxr);

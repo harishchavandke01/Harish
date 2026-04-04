@@ -1041,22 +1041,38 @@ static void namefiletm(char *outfiletm, const char *outfile)
     strcat(outfiletm, "_events.pos");
 }
 
+// static void attach_batch_session(rtk_t *rtk)
+// {
+//     BatchLS_Session_t *old = rtkpos_get_session();
+//     if (old)
+//     {
+//         batchls_session_free(old);
+//         rtkpos_set_session(NULL);
+//     }
+
+//     BatchLS_Session_t *s = batchls_session_create(rtk->nx, 80000);
+
+//     if (!s) {
+//         fprintf(stderr,"[batchls] session create failed\n");
+//         return;
+//     }
+
+//     batchls_session_reset(s);
+//     rtkpos_set_session(s);
+// }
+
 static void attach_batch_session(rtk_t *rtk)
 {
     BatchLS_Session_t *old = rtkpos_get_session();
-    if (old)
-    {
+    if (old) {
         batchls_session_free(old);
         rtkpos_set_session(NULL);
     }
-
-    BatchLS_Session_t *s = batchls_session_create(rtk->nx, 80000);
-
+    BatchLS_Session_t *s = batchls_session_create(rtk->nx);
     if (!s) {
-        fprintf(stderr,"[batchls] session create failed\n");
+        fprintf(stderr, "[batchls] session create failed\n");
         return;
     }
-
     batchls_session_reset(s);
     rtkpos_set_session(s);
 }
@@ -1516,106 +1532,184 @@ extern int postpos(gtime_t ts, gtime_t te, double ti, double tu,
     }
 
 
+    // {
+    //   BatchLS_Session_t *_s = rtkpos_get_session();
+    //   rtkpos_set_session(NULL);
+
+    //   if (_s != NULL && _s->acc.n_obs > 0) {
+    //       int bstat = batchls_solve(_s);
+    //       if (bstat == 0) {
+    //           batchls_fix_cov(_s);
+    //           BatchLS_Result_t *res = &_s->result;
+    //           double pos[3];
+    //           double Cenu[9];
+    //           double sigE,sigN,sigU;
+    //           double horiz,vert;
+    //           ecef2pos(popt->rb, pos);
+    //           covenu(pos, res->C_fixed, Cenu);
+    //           sigE = sqrt(Cenu[0]);
+    //           sigN = sqrt(Cenu[4]);
+    //           sigU = sqrt(Cenu[8]);
+
+    //           horiz = 2.447* sqrt(sigE*sigE + sigN*sigN);
+    //           vert  = 1.96 * sigU;
+
+    //           FILE *fp = fopen(outfile,"a");
+    //           if(fp){
+    //           fprintf(fp,"\n%% Batch LS Baseline Statistics\n");
+    //           fprintf(fp,"%% n_obs        : %d\n",res->n_obs);
+    //           fprintf(fp,"%% n_phase      : %d\n",res->n_phase);
+    //           fprintf(fp,"%% n_param      : %d\n",res->n_param);
+    //           fprintf(fp,"%% DOF          : %d\n",res->dof);
+    //           fprintf(fp,"%% sigma0       : %.6f\n",res->sigma0);
+
+    //           fprintf(fp,"\n%% Baseline covariance\n");
+    //           fprintf(fp,"%%      dX              dY              dZ\n");
+    //           for(int i=0;i<3;i++){
+    //             fprintf(fp,"%% ");
+    //             for(int j=0;j<3;j++)
+    //                 fprintf(fp,"% .15f ", res->C_fixed[i*3+j]);
+    //             fprintf(fp,"\n");
+    //           }
+
+    //           fprintf(fp,"\n%% Standard Errors\n");
+    //           fprintf(fp,"%% sigma_E : %.6f m\n",sigE);
+    //           fprintf(fp,"%% sigma_N : %.6f m\n",sigN);
+    //           fprintf(fp,"%% sigma_U : %.6f m\n",sigU);
+    //           fprintf(fp,"\n%% Precisions\n");
+    //           fprintf(fp,"%% Horizontal precision : %.6f m\n",horiz);
+    //           fprintf(fp,"%% Vertical precision   : %.6f m\n",vert);
+
+    //           fclose(fp);
+
+    //         //   BatchLS_Result_t *res = &_s->result;
+    //           int _i, _j;
+    //           fprintf(stderr,
+    //               "\n========================================\n"
+    //               "  A Posteriori Covariance Matrix\n"
+    //               "========================================\n");
+    //             fprintf(stderr,"  n_obs        = %d\n", res->n_obs);
+    //             fprintf(stderr,"  n_phase      = %d\n", res->n_phase);
+    //             fprintf(stderr,"  n_param      = %d\n", res->n_param);
+    //             fprintf(stderr,"  DOF          = %d\n", res->dof);
+    //             fprintf(stderr,"  sigma0       = %.6f  \n",
+    //                     res->sigma0);
+
+    //             /* --- Baseline block Cbb from full Cxx --- */
+    //             fprintf(stderr,
+    //                 "\n  Float baseline block Cbb [3x3]:\n"
+    //                 "         dX              dY              dZ\n");
+    //             for (_i = 0; _i < 3; _i++) {
+    //                 fprintf(stderr,"  ");
+    //                 for (_j = 0; _j < 3; _j++)
+    //                     fprintf(stderr,"% .15f  ",
+    //                             res->Cxx[_i * res->n_param + _j]);
+    //                 fprintf(stderr,"\n");
+    //             }
+    //             /* --- Fixed C_fixed [3x3] --- */
+    //             if (_s->ready) {
+    //                 fprintf(stderr,
+    //                     "\n  Fixed C_fixed [3x3]  \n"
+    //                     "         dX              dY              dZ\n");
+    //                 for (_i = 0; _i < 3; _i++) {
+    //                     fprintf(stderr,"  ");
+    //                     for (_j = 0; _j < 3; _j++)
+    //                         fprintf(stderr,"% .15f  ",
+    //                                 res->C_fixed[_i*3+_j]);
+    //                     fprintf(stderr,"\n");
+    //                 }
+    //                 fprintf(stderr,"\n");
+    //             } else {
+    //                 fprintf(stderr,"  [fix_cov not ready]\n");
+    //             }
+    //             fprintf(stderr,
+    //                 "========================================\n\n");
+    //         } else {
+    //             fprintf(stderr,"[batchls] solve failed: status=%d"
+    //                            "  n_obs=%d\n", bstat, _s->acc.n_obs);
+    //         }
+    //         }
+    //       }
+    //     batchls_session_free(_s);
+    //   }
+
     {
       BatchLS_Session_t *_s = rtkpos_get_session();
       rtkpos_set_session(NULL);
 
-      if (_s != NULL && _s->acc.n_obs > 0) {
+      if (_s != NULL && (_s->acc.n_phase + _s->acc.n_code) > 0) {
           int bstat = batchls_solve(_s);
           if (bstat == 0) {
               batchls_fix_cov(_s);
               BatchLS_Result_t *res = &_s->result;
-              double pos[3];
-              double Cenu[9];
-              double sigE,sigN,sigU;
-              double horiz,vert;
+              double pos[3], Cenu[9];
+              double sigE, sigN, sigU, horiz, vert;
+
               ecef2pos(popt->rb, pos);
+              /* C_fixed is column-major — covenu expects column-major ✓ */
               covenu(pos, res->C_fixed, Cenu);
-              sigE = sqrt(Cenu[0]);
-              sigN = sqrt(Cenu[4]);
-              sigU = sqrt(Cenu[8]);
+              sigE = sqrt(fabs(Cenu[0]));
+              sigN = sqrt(fabs(Cenu[4]));
+              sigU = sqrt(fabs(Cenu[8]));
+              horiz = 2.447 * sqrt(sigE * sigE + sigN * sigN);
+              vert  = 1.96  * sigU;
 
-              horiz = 2.447* sqrt(sigE*sigE + sigN*sigN);
-              vert  = 1.96 * sigU;
+              FILE *fp = fopen(outfile, "a");
+              if (fp) {
+                  fprintf(fp, "\n%% Batch LS Baseline Statistics\n");
+                  fprintf(fp, "%% n_obs        : %d\n", res->n_obs);
+                  fprintf(fp, "%% n_phase      : %d\n", res->n_phase);
+                  fprintf(fp, "%% n_param      : %d\n", res->n_param);
+                  fprintf(fp, "%% DOF          : %d\n", res->dof);
+                  fprintf(fp, "%% sigma0       : %.6f\n", res->sigma0);
 
-              FILE *fp = fopen(outfile,"a");
-              if(fp){
-              fprintf(fp,"\n%% Batch LS Baseline Statistics\n");
-              fprintf(fp,"%% n_obs        : %d\n",res->n_obs);
-              fprintf(fp,"%% n_phase      : %d\n",res->n_phase);
-              fprintf(fp,"%% n_param      : %d\n",res->n_param);
-              fprintf(fp,"%% DOF          : %d\n",res->dof);
-              fprintf(fp,"%% sigma0       : %.6f\n",res->sigma0);
+                  /* C_fixed is col-major: (row,col) at index [row + col*3] */
+                  fprintf(fp, "\n%% Baseline covariance (ECEF, m^2)\n");
+                  fprintf(fp, "%%      dX              dY              dZ\n");
+                  for (int i = 0; i < 3; i++) {
+                      fprintf(fp, "%% ");
+                      for (int j = 0; j < 3; j++)
+                          fprintf(fp, "% .15f ", res->C_fixed[i + j * 3]);
+                      fprintf(fp, "\n");
+                  }
 
-              fprintf(fp,"\n%% Baseline covariance\n");
-              fprintf(fp,"%%      dX              dY              dZ\n");
-              for(int i=0;i<3;i++){
-                fprintf(fp,"%% ");
-                for(int j=0;j<3;j++)
-                    fprintf(fp,"% .15f ", res->C_fixed[i*3+j]);
-                fprintf(fp,"\n");
+                  fprintf(fp, "\n%% Standard Errors\n");
+                  fprintf(fp, "%% sigma_E : %.6f m\n", sigE);
+                  fprintf(fp, "%% sigma_N : %.6f m\n", sigN);
+                  fprintf(fp, "%% sigma_U : %.6f m\n", sigU);
+                  fprintf(fp, "\n%% Precisions\n");
+                  fprintf(fp, "%% Horizontal precision : %.6f m\n", horiz);
+                  fprintf(fp, "%% Vertical precision   : %.6f m\n", vert);
+                  fclose(fp);
+
+                  /* Debug output to stderr */
+                  fprintf(stderr,
+                      "\n========================================\n"
+                      "  A Posteriori Covariance Matrix\n"
+                      "========================================\n");
+                  fprintf(stderr, "  n_obs        = %d\n", res->n_obs);
+                  fprintf(stderr, "  n_phase      = %d\n", res->n_phase);
+                  fprintf(stderr, "  n_param      = %d\n", res->n_param);
+                  fprintf(stderr, "  DOF          = %d\n", res->dof);
+                  fprintf(stderr, "  sigma0       = %.6f\n", res->sigma0);
+
+                  fprintf(stderr, "\n  Fixed C_fixed [3x3] (ECEF, m^2):\n");
+                  fprintf(stderr, "         dX              dY              dZ\n");
+                  for (int _i = 0; _i < 3; _i++) {
+                      fprintf(stderr, "  ");
+                      for (int _j = 0; _j < 3; _j++)
+                          fprintf(stderr, "% .15f  ", res->C_fixed[_i + _j * 3]);
+                      fprintf(stderr, "\n");
+                  }
+                  fprintf(stderr, "========================================\n\n");
               }
-
-              fprintf(fp,"\n%% Standard Errors\n");
-              fprintf(fp,"%% sigma_E : %.6f m\n",sigE);
-              fprintf(fp,"%% sigma_N : %.6f m\n",sigN);
-              fprintf(fp,"%% sigma_U : %.6f m\n",sigU);
-              fprintf(fp,"\n%% Precisions\n");
-              fprintf(fp,"%% Horizontal precision : %.6f m\n",horiz);
-              fprintf(fp,"%% Vertical precision   : %.6f m\n",vert);
-
-              fclose(fp);
-
-            //   BatchLS_Result_t *res = &_s->result;
-              int _i, _j;
-              fprintf(stderr,
-                  "\n========================================\n"
-                  "  A Posteriori Covariance Matrix\n"
-                  "========================================\n");
-                fprintf(stderr,"  n_obs        = %d\n", res->n_obs);
-                fprintf(stderr,"  n_phase      = %d\n", res->n_phase);
-                fprintf(stderr,"  n_param      = %d\n", res->n_param);
-                fprintf(stderr,"  DOF          = %d\n", res->dof);
-                fprintf(stderr,"  sigma0       = %.6f  \n",
-                        res->sigma0);
-
-                /* --- Baseline block Cbb from full Cxx --- */
-                fprintf(stderr,
-                    "\n  Float baseline block Cbb [3x3]:\n"
-                    "         dX              dY              dZ\n");
-                for (_i = 0; _i < 3; _i++) {
-                    fprintf(stderr,"  ");
-                    for (_j = 0; _j < 3; _j++)
-                        fprintf(stderr,"% .15f  ",
-                                res->Cxx[_i * res->n_param + _j]);
-                    fprintf(stderr,"\n");
-                }
-                /* --- Fixed C_fixed [3x3] --- */
-                if (_s->ready) {
-                    fprintf(stderr,
-                        "\n  Fixed C_fixed [3x3]  \n"
-                        "         dX              dY              dZ\n");
-                    for (_i = 0; _i < 3; _i++) {
-                        fprintf(stderr,"  ");
-                        for (_j = 0; _j < 3; _j++)
-                            fprintf(stderr,"% .15f  ",
-                                    res->C_fixed[_i*3+_j]);
-                        fprintf(stderr,"\n");
-                    }
-                    fprintf(stderr,"\n");
-                } else {
-                    fprintf(stderr,"  [fix_cov not ready]\n");
-                }
-                fprintf(stderr,
-                    "========================================\n\n");
-            } else {
-                fprintf(stderr,"[batchls] solve failed: status=%d"
-                               "  n_obs=%d\n", bstat, _s->acc.n_obs);
-            }
-            }
+          } else {
+              fprintf(stderr, "[batchls] solve failed: status=%d n_obs=%d\n",
+                      bstat, _s->acc.n_phase + _s->acc.n_code);
           }
-        batchls_session_free(_s);
       }
+      batchls_session_free(_s);
+    }
     /* close processing session */
     closeses(&navs,&pcvss,&pcvsr);
     return stat;
