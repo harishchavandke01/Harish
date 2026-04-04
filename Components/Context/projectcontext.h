@@ -215,7 +215,13 @@ struct AdjustmentOptions {
     bool   useCovariance = true;
     double aPrioriScalar = 1.0;
     double defaultSigmaH = 0.010;
-    double defaultSigmaV  = 0.020;
+    double defaultSigmaV = 0.020;
+
+    struct{
+        double antennaHeightError = 0.003;
+        double centeringError = 0.000;
+    }setupErrors;
+
     double xx;
     double xy;
     double xz;

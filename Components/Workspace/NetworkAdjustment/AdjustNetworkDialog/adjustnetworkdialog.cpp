@@ -241,6 +241,26 @@ void AdjustNetworkDialog::buildWeightingTab()
     sigmaVSpin->setFixedWidth(100);
     sigmaVSpin->setToolTip("Fallback vertical precision for ECEF Z component.");
 
+    QLabel *antennaerrorLabel = new QLabel("Antenna height error : ");
+    antennaHeightErrorSpin = new QDoubleSpinBox();
+    antennaHeightErrorSpin->setRange(0.0001, 0.01);
+    antennaHeightErrorSpin->setSingleStep(0.0001);
+    antennaHeightErrorSpin->setDecimals(4);
+    antennaHeightErrorSpin->setSuffix(" m");
+    antennaHeightErrorSpin->setValue(options.setupErrors.antennaHeightError);
+    antennaHeightErrorSpin->setFixedWidth(120);
+    antennaHeightErrorSpin->setToolTip("The estimated error for Surveypod instrument height.");
+
+    QLabel *centeringErrorLabel = new QLabel("Centering error : ");
+    centeringErrorSpin = new QDoubleSpinBox();
+    centeringErrorSpin->setRange(0.0001, 0.01);
+    centeringErrorSpin->setSingleStep(0.0001);
+    centeringErrorSpin->setDecimals(4);
+    centeringErrorSpin->setSuffix(" m");
+    centeringErrorSpin->setValue(options.setupErrors.centeringError);
+    centeringErrorSpin->setFixedWidth(120);
+    centeringErrorSpin->setToolTip("The estimated plumbing and leveling error for \nSurveypod instrument over a survey point.");
+
     QHBoxLayout * hlay1 = new QHBoxLayout();
     hlay1->setContentsMargins(0,0,0,0);
     hlay1->addWidget(aPrioriLabel);
@@ -250,9 +270,17 @@ void AdjustNetworkDialog::buildWeightingTab()
     hlay1->addWidget(sigmaVLabel);
     hlay1->addWidget(sigmaVSpin);
 
+    QHBoxLayout *hlay2 = new QHBoxLayout();
+    hlay2->addWidget(antennaerrorLabel);
+    hlay2->addWidget(antennaHeightErrorSpin);
+    hlay2->addSpacing(25);
+    hlay2->addWidget(centeringErrorLabel);
+    hlay2->addWidget(centeringErrorSpin);
+
     outerLay->addWidget(useCovCheck);
     outerLay->addSpacing(6);
     outerLay->addLayout(hlay1);
+    outerLay->addLayout(hlay2);
     outerLay->addStretch();
 
     tabs->addTab(page, "Weighting");
@@ -282,10 +310,12 @@ void AdjustNetworkDialog::onAdjustClicked()
             "subnetwork to adjust.</span>");
         return;
     }
-    options.useCovariance  = useCovCheck->isChecked();
-    options.aPrioriScalar  = aPrioriSpin->value();
-    options.defaultSigmaH  = sigmaHSpin->value();
-    options.defaultSigmaV  = sigmaVSpin->value();
+    options.useCovariance = useCovCheck->isChecked();
+    options.aPrioriScalar = aPrioriSpin->value();
+    options.defaultSigmaH = sigmaHSpin->value();
+    options.defaultSigmaV = sigmaVSpin->value();
+    options.setupErrors.antennaHeightError = antennaHeightErrorSpin->value();
+    options.setupErrors.centeringError = centeringErrorSpin->value();
 
     CovarianceMatrix *cvmat = new CovarianceMatrix(projectContext);
     int result = cvmat->exec();

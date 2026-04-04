@@ -151,7 +151,7 @@ QString Utils::findNavForObs(const QString &obsPath)
 
     QDir dir(obsFolder);
     QStringList filters;
-    filters << baseName + ".*n";
+    filters << baseName + ".*n" << baseName + ".nav";
 
     QFileInfoList navFiles = dir.entryInfoList(filters, QDir::Files | QDir::Readable, QDir::Name );
     if (!navFiles.isEmpty())
