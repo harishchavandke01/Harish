@@ -62,36 +62,6 @@ void NetworkAdjustment::propagateAdjustedCoordinates(const SubnetworkResult &res
 {
     if (!projectContext) return;
 
-    // WGS-84 constants
-    const double a  = 6378137.0;
-    const double f  = 1.0 / 298.257223563;
-    const double e2 = 2.0 * f - f * f;
-
-    // ECEF → geodetic (Bowring iterative, returns lat/lon in degrees, h in metres)
-    auto ecef2geo = [&](double X, double Y, double Z,
-                        double &latDeg, double &lonDeg, double &h)
-    {
-        double p  = std::sqrt(X * X + Y * Y);
-        lonDeg    = std::atan2(Y, X) * 180.0 / M_PI;
-        if (p < 1e-10) {
-            latDeg = (Z >= 0.0) ? 90.0 : -90.0;
-            h = std::fabs(Z) - a * std::sqrt(1.0 - e2);
-            return;
-        }
-        double lat = std::atan2(Z, p * (1.0 - e2));
-        for (int i = 0; i < 10; ++i) {
-            double sinLat = std::sin(lat);
-            double N = a / std::sqrt(1.0 - e2 * sinLat * sinLat);
-            lat = std::atan2(Z + e2 * N * sinLat, p);
-        }
-        double sinLat = std::sin(lat);
-        double cosLat = std::cos(lat);
-        double N = a / std::sqrt(1.0 - e2 * sinLat * sinLat);
-        h = (cosLat > 1e-10) ? p / cosLat - N
-                              : std::fabs(Z) / sinLat - N * (1.0 - e2);
-        latDeg = lat * 180.0 / M_PI;
-    };
-
     ProcessUtils pu;
 
     for (auto it = result.adjustedECEF.constBegin();
@@ -108,15 +78,15 @@ void NetworkAdjustment::propagateAdjustedCoordinates(const SubnetworkResult &res
         st.ecef.Y = adj.y;
         st.ecef.Z = adj.z;
 
-        // Update geodetic
+        // Update geodetic using the shared ProcessUtils::ecef2geo helper
         double latDeg = 0, lonDeg = 0, hEllip = 0;
-        ecef2geo(adj.x, adj.y, adj.z, latDeg, lonDeg, hEllip);
+        ProcessUtils::ecef2geo(adj.x, adj.y, adj.z, latDeg, lonDeg, hEllip);
         st.geo.lat = latDeg;
         st.geo.lon = lonDeg;
         st.geo.h   = hEllip;
 
-        // Update UTM (Easting / Northing); keep existing orthometric height
-        // since we do not recompute geoid separation here
+        // Update UTM (Easting / Northing); orthometric height is not
+        // recomputed here because that would require re-querying the geoid model.
         try {
             UTMResult utm = pu.WGS84ToUTM(latDeg, lonDeg, hEllip);
             st.easting  = utm.easting;

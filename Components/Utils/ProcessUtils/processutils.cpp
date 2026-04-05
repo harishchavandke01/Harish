@@ -224,6 +224,40 @@ char latitudeToZoneLetter(double latitude) {
     return letters[index];
 }
 
+void ProcessUtils::ecef2geo(double X, double Y, double Z,
+                             double &latDeg, double &lonDeg, double &h)
+{
+    // WGS-84 ellipsoid parameters
+    const double a  = 6378137.0;              // semi-major axis (m)
+    const double f  = 1.0 / 298.257223563;
+    const double e2 = 2.0 * f - f * f;       // first eccentricity squared
+
+    double p = std::sqrt(X * X + Y * Y);
+    lonDeg   = std::atan2(Y, X) * (180.0 / M_PI);
+
+    // Degenerate case: at or very near a geographic pole
+    if (p < 1e-10) {
+        latDeg = (Z >= 0.0) ? 90.0 : -90.0;
+        h = std::fabs(Z) - a * std::sqrt(1.0 - e2);
+        return;
+    }
+
+    // Bowring's iterative method.  Converges in 2–3 steps;
+    // 10 iterations provide a comfortable safety margin.
+    double lat = std::atan2(Z, p * (1.0 - e2));
+    for (int i = 0; i < 10; ++i) {
+        double sinLat = std::sin(lat);
+        double N = a / std::sqrt(1.0 - e2 * sinLat * sinLat);
+        lat = std::atan2(Z + e2 * N * sinLat, p);
+    }
+    double sinLat = std::sin(lat);
+    double cosLat = std::cos(lat);
+    double N = a / std::sqrt(1.0 - e2 * sinLat * sinLat);
+    h = (cosLat > 1e-10) ? p / cosLat - N
+                          : std::fabs(Z) / sinLat - N * (1.0 - e2);
+    latDeg = lat * (180.0 / M_PI);
+}
+
 
 UTMResult ProcessUtils::WGS84ToUTM(double lat, double lon, double alt)
 {

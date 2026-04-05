@@ -795,8 +795,10 @@ void LSSolver::populateResult(const Eigen::VectorXd &v, const Eigen::MatrixXd &P
         r.standardizedResidual = std::max({std::abs(r.tauX), std::abs(r.tauY), std::abs(r.tauZ)});
         r.tauFailed = (r.standardizedResidual > tau_crit);
 
-        // Redundancy numbers: diagonal of R_k = P_k * Q_vv_k (3x3 block)
-        // Each r_i ∈ [0,1]; sum over all components = DOF
+        // Redundancy numbers: r_i = diagonal of R_k = P_k * Q_vv_k  (3×3 block)
+        // Theoretical range: 0 (unchecked) to 1 (fully redundant).
+        // Clamping to [0,1] guards against minor floating-point precision
+        // issues that can push values marginally outside the theoretical bounds.
         {
             Eigen::Matrix3d Pk  = P.block(row, row, 3, 3);
             Eigen::Matrix3d Qvk = Q_vv.block(row, row, 3, 3);

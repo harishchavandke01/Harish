@@ -15,40 +15,6 @@ GenerateNetworkAdjustmentReport::GenerateNetworkAdjustmentReport(QWidget *parent
 {}
 
 // ---------------------------------------------------------------------------
-// ECEF → geodetic (WGS-84 iterative Bowring method)
-// Returns lat/lon in degrees, h in metres (ellipsoidal)
-// ---------------------------------------------------------------------------
-static void ecef2geo(double X, double Y, double Z,
-                     double &latDeg, double &lonDeg, double &h)
-{
-    const double a  = 6378137.0;
-    const double f  = 1.0 / 298.257223563;
-    const double e2 = 2.0 * f - f * f;
-
-    double p = std::sqrt(X * X + Y * Y);
-    lonDeg   = std::atan2(Y, X) * 180.0 / M_PI;
-
-    if (p < 1e-10) {
-        latDeg = (Z >= 0.0) ? 90.0 : -90.0;
-        h = std::fabs(Z) - a * std::sqrt(1.0 - e2);
-        return;
-    }
-
-    double lat = std::atan2(Z, p * (1.0 - e2));
-    for (int i = 0; i < 10; ++i) {
-        double sinLat = std::sin(lat);
-        double N = a / std::sqrt(1.0 - e2 * sinLat * sinLat);
-        lat = std::atan2(Z + e2 * N * sinLat, p);
-    }
-    double sinLat = std::sin(lat);
-    double cosLat = std::cos(lat);
-    double N = a / std::sqrt(1.0 - e2 * sinLat * sinLat);
-    h = (cosLat > 1e-10) ? p / cosLat - N
-                          : std::fabs(Z) / sinLat - N * (1.0 - e2);
-    latDeg = lat * 180.0 / M_PI;
-}
-
-// ---------------------------------------------------------------------------
 // Format helpers
 // ---------------------------------------------------------------------------
 static QString fmt(double v, int decimals = 4)
@@ -244,9 +210,9 @@ tr:nth-child(even) td { background:#f4f7fb; }
             // Corrections in mm
             Vector3d64 corr = sr.stationCorrections.value(uid, Vector3d64(0, 0, 0));
 
-            // Convert adjusted ECEF → geodetic
+            // Convert adjusted ECEF → geodetic using shared ProcessUtils helper
             double latAdj = 0, lonAdj = 0, hAdj = 0;
-            ecef2geo(adj.x, adj.y, adj.z, latAdj, lonAdj, hAdj);
+            ProcessUtils::ecef2geo(adj.x, adj.y, adj.z, latAdj, lonAdj, hAdj);
 
             // Adjusted UTM
             double eastAdj = st.easting, northAdj = st.northing;
@@ -477,7 +443,7 @@ bool GenerateNetworkAdjustmentReport::savePDF(const ProjectContext *ctx,
       <img src=':/images/images/surveypod.png' style='max-width:45px;height:auto;'/>
     </td>
     <td style="vertical-align:middle;font-weight:bold;font-size:18px;border:none;">
-      Surveypod &mdash; Network Adjustment Report
+      SurveyPod &mdash; Network Adjustment Report
     </td>
     <td style="text-align:right;font-size:8pt;color:#777;border:none;vertical-align:bottom;">
       Nibrus Technologies Pvt Ltd

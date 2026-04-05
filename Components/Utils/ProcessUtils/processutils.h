@@ -149,6 +149,17 @@ public:
     UTMResult WGS84ToUTM(double lat, double lon, double alt);
     void generateKMLFromPosData(const QMap<QString, PosData> &posData,const QString &filePath);
 
+    /**
+     * Convert ECEF (X,Y,Z metres) to WGS-84 geodetic coordinates.
+     * Uses Bowring's iterative method (typically converges in 2–3 iterations;
+     * 10 iterations used here for a generous safety margin).
+     * @param latDeg  Geodetic latitude  (degrees, positive North)
+     * @param lonDeg  Geodetic longitude (degrees, positive East)
+     * @param h       Ellipsoidal height (metres)
+     */
+    static void ecef2geo(double X, double Y, double Z,
+                         double &latDeg, double &lonDeg, double &h);
+
 private:
     static void updateAggregates(PosData &p, const EpochRecord &er);
     void consolidateSatellites(PosData &out);
