@@ -93,28 +93,22 @@ bool LSSolver::hasValidCovariance(const ProjectBaseline &bl) const
 
 Eigen::Matrix3d LSSolver::weightBlock(const ProjectBaseline &bl) const
 {
-    Eigen::Matrix3d cov;
     if (m_options.useCovariance && hasValidCovariance(bl)) {
+        qDebug()<<"inside the weight block calculations\n";
+        Eigen::Matrix3d C;
         for (int i = 0; i < 3; i++)
             for (int j = 0; j < 3; j++)
-                cov(i, j) = bl.cov[i][j];
+                C(i, j) = m_options.aPrioriScalar * bl.cov[i][j];
+        return C.inverse();
     }
-    else {
-        double sigH_sq = m_options.defaultSigmaH * m_options.defaultSigmaH;
-        double sigV_sq = m_options.defaultSigmaV * m_options.defaultSigmaV;
-        cov(0, 0) = sigH_sq;
-        cov(1, 1) = sigH_sq;
-        cov(2, 2) = sigV_sq;
-    }
-    cov *= m_options.aPrioriScalar;
 
-    double ant_sq = m_options.setupErrors.antennaHeightError *  m_options.setupErrors.antennaHeightError;
-    double center_sq = m_options.setupErrors.centeringError * m_options.setupErrors.centeringError;
-
-    cov(0, 0) += center_sq + ant_sq;
-    cov(1, 1) += center_sq + ant_sq;
-    cov(2, 2) += ant_sq;
-    return cov.inverse();
+    double wH = 1.0 / (m_options.aPrioriScalar * m_options.defaultSigmaH * m_options.defaultSigmaH);
+    double wV = 1.0 / (m_options.aPrioriScalar * m_options.defaultSigmaV * m_options.defaultSigmaV);
+    Eigen::Matrix3d W = Eigen::Matrix3d::Zero();
+    W(0, 0) = wH;
+    W(1, 1) = wH;
+    W(2, 2) = wV;
+    return W;
 }
 
 void LSSolver::buildSystem(const QVector<ProjectBaseline> &baselines, Eigen::MatrixXd &A, Eigen::VectorXd &w, Eigen::MatrixXd &P) const
