@@ -55,7 +55,7 @@ void RunNetworkAdjustment::ExecuteAdjust()
         Vector3d64 corr = result.stationCorrections.value(uid, Vector3d64(0,0,0));
 
         qDebug()<<"Station:" << uid
-                <<"\n  | Final XYZ:"
+                <<"\n  | Final XYZ: "
                 <<QString::number(ecef.x, 'f', 4)
                 <<QString::number(ecef.y, 'f', 4)
                 <<QString::number(ecef.z, 'f', 4)
