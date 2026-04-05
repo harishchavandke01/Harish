@@ -19,9 +19,13 @@ class NetworkAdjustment : public QWidget
 public:
     explicit NetworkAdjustment(ProjectContext *_projectContext, QWidget*parent = nullptr);
 
+    /** Provide the project's root folder so reports can be saved alongside the project. */
+    void setProjectFolder(const QString &folder);
+
 private:
     ProjectContext *projectContext;
     AdjustmentOptions adjOptions;
+    QString m_projectFolder;
 
     QWidget*leftWidget;
     QLabel *heading;
@@ -67,6 +71,9 @@ private:
     void hideStatsCard();
 
     void startNextSubnetJob();
+
+    /** Update ProjectStation geo/easting/northing from adjusted ECEF after each subnetwork. */
+    void propagateAdjustedCoordinates(const SubnetworkResult &result);
 
 private slots:
     void onSetControlsClicked();

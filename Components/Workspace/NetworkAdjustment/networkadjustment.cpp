@@ -6,12 +6,17 @@
 #include <QInputDialog>
 #include <QThread>
 #include <QTimer>
+#include <QFileDialog>
+#include <QStandardPaths>
+#include <cmath>
 #include "../../Utils/custommessagebox.h"
 #include "../../Utils/customprogressbar.h"
+#include "../../Utils/ProcessUtils/processutils.h"
 #include "FixStations/fixstations.h"
 #include "AdjustNetworkDialog/adjustnetworkdialog.h"
 #include "SubnetworkUtils/subnetworkutils.h"
 #include "../../backend/runnetworkadjustment.h"
+#include "../BaselineProcessing/GenerateReport/generatenetworkadjustmentreport.h"
 
 NetworkAdjustment::NetworkAdjustment(ProjectContext *_projectContext, QWidget *parent) : QWidget(parent), projectContext(_projectContext)
 {
@@ -41,6 +46,83 @@ NetworkAdjustment::NetworkAdjustment(ProjectContext *_projectContext, QWidget *p
     connectSignals();
     refreshModeBadge();
     refreshButtonStates();
+}
+
+void NetworkAdjustment::setProjectFolder(const QString &folder)
+{
+    m_projectFolder = folder;
+}
+
+// ---------------------------------------------------------------------------
+// Propagate adjusted ECEF → geodetic + UTM for all stations in a subnetwork
+// result. Called after every successful subnetwork adjustment so that
+// projectContext->stations always reflects the latest adjusted positions.
+// ---------------------------------------------------------------------------
+void NetworkAdjustment::propagateAdjustedCoordinates(const SubnetworkResult &result)
+{
+    if (!projectContext) return;
+
+    // WGS-84 constants
+    const double a  = 6378137.0;
+    const double f  = 1.0 / 298.257223563;
+    const double e2 = 2.0 * f - f * f;
+
+    // ECEF → geodetic (Bowring iterative, returns lat/lon in degrees, h in metres)
+    auto ecef2geo = [&](double X, double Y, double Z,
+                        double &latDeg, double &lonDeg, double &h)
+    {
+        double p  = std::sqrt(X * X + Y * Y);
+        lonDeg    = std::atan2(Y, X) * 180.0 / M_PI;
+        if (p < 1e-10) {
+            latDeg = (Z >= 0.0) ? 90.0 : -90.0;
+            h = std::fabs(Z) - a * std::sqrt(1.0 - e2);
+            return;
+        }
+        double lat = std::atan2(Z, p * (1.0 - e2));
+        for (int i = 0; i < 10; ++i) {
+            double sinLat = std::sin(lat);
+            double N = a / std::sqrt(1.0 - e2 * sinLat * sinLat);
+            lat = std::atan2(Z + e2 * N * sinLat, p);
+        }
+        double sinLat = std::sin(lat);
+        double cosLat = std::cos(lat);
+        double N = a / std::sqrt(1.0 - e2 * sinLat * sinLat);
+        h = (cosLat > 1e-10) ? p / cosLat - N
+                              : std::fabs(Z) / sinLat - N * (1.0 - e2);
+        latDeg = lat * 180.0 / M_PI;
+    };
+
+    ProcessUtils pu;
+
+    for (auto it = result.adjustedECEF.constBegin();
+         it != result.adjustedECEF.constEnd(); ++it)
+    {
+        const QString &uid = it.key();
+        if (!projectContext->stations.contains(uid)) continue;
+
+        ProjectStation &st = projectContext->stations[uid];
+        const Vector3d64 &adj = it.value();
+
+        // Update ECEF
+        st.ecef.X = adj.x;
+        st.ecef.Y = adj.y;
+        st.ecef.Z = adj.z;
+
+        // Update geodetic
+        double latDeg = 0, lonDeg = 0, hEllip = 0;
+        ecef2geo(adj.x, adj.y, adj.z, latDeg, lonDeg, hEllip);
+        st.geo.lat = latDeg;
+        st.geo.lon = lonDeg;
+        st.geo.h   = hEllip;
+
+        // Update UTM (Easting / Northing); keep existing orthometric height
+        // since we do not recompute geoid separation here
+        try {
+            UTMResult utm = pu.WGS84ToUTM(latDeg, lonDeg, hEllip);
+            st.easting  = utm.easting;
+            st.northing = utm.northing;
+        } catch (...) {}
+    }
 }
 
 void NetworkAdjustment::connectSignals()
@@ -392,6 +474,10 @@ void NetworkAdjustment::startNextSubnetJob()
             }
         }
 
+        // Propagate adjusted ECEF back into station geodetic / UTM coordinates
+        if (result.success)
+            propagateAdjustedCoordinates(result);
+
         m_adjustProgressBar->updateCurrent(m_currentSubnetJob + 1);
         ++m_currentSubnetJob;
         startNextSubnetJob();
@@ -422,12 +508,40 @@ void NetworkAdjustment::onReportClicked()
 {
     if (!projectContext) return;
     const AdjustmentResult &ar = projectContext->adjustmentResult;
-    if (ar.subnetworkResults.isEmpty()) return;
+    if (ar.subnetworkResults.isEmpty()) {
+        CustomMessageBox mb("INFO", "No adjustment results available.\nRun the network adjustment first.", "OK", this);
+        mb.exec();
+        return;
+    }
 
-    CustomMessageBox mb("INFO",
-                        "Report generation will be implemented in a later phase.",
-                        "OK", this);
-    mb.exec();
+    // Suggest a default save path
+    QString defaultPath = m_projectFolder.isEmpty()
+        ? QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)
+        : m_projectFolder;
+    defaultPath += "/network_adjustment_report.pdf";
+
+    QString filePath = QFileDialog::getSaveFileName(
+        this,
+        tr("Save Network Adjustment Report"),
+        defaultPath,
+        tr("PDF Files (*.pdf);;All Files (*)"));
+
+    if (filePath.isEmpty()) return;  // user cancelled
+
+    bool ok = GenerateNetworkAdjustmentReport::savePDF(projectContext, adjOptions, filePath);
+
+    if (ok) {
+        CustomMessageBox mb("INFO",
+                            QString("Network Adjustment Report saved to:\n%1").arg(filePath),
+                            "OK", this);
+        mb.exec();
+    } else {
+        CustomMessageBox mb("ERROR",
+                            "Failed to generate the Network Adjustment Report.\n"
+                            "Please check that the path is writable.",
+                            "OK", this);
+        mb.exec();
+    }
 }
 
 void NetworkAdjustment::onBaselineDataReady()

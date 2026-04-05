@@ -146,11 +146,19 @@ struct SubnetworkResult {
 
     struct Residual {
         QString base, rover;
+        // observed baseline components (ECEF, metres)
+        double obsX = 0, obsY = 0, obsZ = 0;
+        // adjusted baseline components (ECEF, metres)
+        double adjX = 0, adjY = 0, adjZ = 0;
+        // residuals v = obs - adj
         double vX = 0, vY = 0, vZ = 0;
         double vNorm = 0;
+        // standardised residuals (tau test)
         double tauX = 0, tauY = 0, tauZ = 0;
         double standardizedResidual = 0;
         bool   tauFailed = false;
+        // redundancy numbers (0–1 per component)
+        double redundancyX = 0, redundancyY = 0, redundancyZ = 0;
     };
     QVector<Residual> residuals;
 

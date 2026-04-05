@@ -72,5 +72,6 @@ void Workspace::setProjectFolder(const QString &_projectFolder)
     projectFolder=_projectFolder;
     rinex->setProjectFolder(projectFolder);
     process->setProjectFolder(projectFolder);
+    adjustment->setProjectFolder(projectFolder);
 }
 
