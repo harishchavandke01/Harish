@@ -6,12 +6,18 @@
 #include <QInputDialog>
 #include <QThread>
 #include <QTimer>
+#include <QStandardPaths>
+#include <QFileDialog>
+#include <cmath>
+#include <QDesktopServices>
+#include "../../../Utils/ProcessUtils/processutils.h"
 #include "../../Utils/custommessagebox.h"
 #include "../../Utils/customprogressbar.h"
 #include "FixStations/fixstations.h"
 #include "AdjustNetworkDialog/adjustnetworkdialog.h"
 #include "SubnetworkUtils/subnetworkutils.h"
 #include "../../backend/runnetworkadjustment.h"
+#include "../BaselineProcessing/GenerateReport/generatenetworkadjustmentreport.h"
 
 NetworkAdjustment::NetworkAdjustment(ProjectContext *_projectContext, QWidget *parent) : QWidget(parent), projectContext(_projectContext)
 {
@@ -52,9 +58,7 @@ void NetworkAdjustment::connectSignals()
             this, &NetworkAdjustment::onSubnetComboChanged);
 
     if (projectContext) {
-        connect(projectContext, &ProjectContext::baselineReady,
-                this, &NetworkAdjustment::onBaselineDataReady);
-
+        connect(projectContext, &ProjectContext::baselineReady,this, &NetworkAdjustment::onBaselineDataReady);
         connect(projectContext, &ProjectContext::adjustmentFinished, this, [this]() {
             refreshSubnetCombo();
             restoreStatsCard();
@@ -391,7 +395,9 @@ void NetworkAdjustment::startNextSubnetJob()
                 break;
             }
         }
-
+        if(result.success){
+            propagateAdjustedCoordinates(result);
+        }
         m_adjustProgressBar->updateCurrent(m_currentSubnetJob + 1);
         ++m_currentSubnetJob;
         startNextSubnetJob();
@@ -422,12 +428,30 @@ void NetworkAdjustment::onReportClicked()
 {
     if (!projectContext) return;
     const AdjustmentResult &ar = projectContext->adjustmentResult;
-    if (ar.subnetworkResults.isEmpty()) return;
+    if (ar.subnetworkResults.isEmpty()){
+        CustomMessageBox * mb = new CustomMessageBox("INFO", "No network adjustment result is available\nPlease run the network adjustment first.","OK");
+        mb->exec();
+        return;
+    }
 
-    CustomMessageBox mb("INFO",
-                        "Report generation will be implemented in a later phase.",
-                        "OK", this);
-    mb.exec();
+    QString defaultPath = m_projectFolder.isEmpty()
+                              ? QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)
+                              : m_projectFolder;
+    defaultPath += "/network_adjustment_report.pdf";
+    QString filePath = QFileDialog::getSaveFileName(this, tr("Save Network Adjustment Report"), defaultPath, tr("PDF Files (*.pdf);;All Files (*)"));
+    if(filePath.isEmpty()) return;
+    GenerateNetworkAdjustmentReport * gnar = new GenerateNetworkAdjustmentReport();
+    bool ok = gnar->savePDF(projectContext, adjOptions, filePath);
+    if(ok){
+        CustomMessageBox *mb = new CustomMessageBox("INFO", QString("Network adjustment report generated successfully and saved at\n").arg(filePath),"OK");
+        mb->exec();
+        QDesktopServices::openUrl(QUrl::fromLocalFile(filePath));
+        return;
+    }
+    else{
+        CustomMessageBox *mb = new CustomMessageBox("ERROR", "There was an error while generating the report!\nPlease try again.","OK");
+        mb->exec();
+    }
 }
 
 void NetworkAdjustment::onBaselineDataReady()
@@ -466,4 +490,39 @@ void NetworkAdjustment::showEvent(QShowEvent *event)
 
     refreshModeBadge();
     refreshButtonStates();
+}
+
+void NetworkAdjustment::propagateAdjustedCoordinates(const SubnetworkResult &result)
+{
+    if(!projectContext) return;
+    ProcessUtils pu;
+    for(auto it = result.adjustedECEF.constBegin(); it!= result.adjustedECEF.constEnd(); it++){
+        QString uid = it.key();
+        qDebug()<<"Uid under the propagate Adjsuted coordiantes : "<<uid;
+        if(!projectContext->stations.contains(uid)) continue;
+
+        ProjectStation &st = projectContext->stations[uid];
+        const Vector3d64 &adj = it.value();
+
+        st.ecef.X = adj.x;
+        st.ecef.Y = adj.y;
+        st.ecef.Z = adj.z;
+
+        double latDeg = 0, lonDeg = 0, hEllip = 0;
+        pu.ecef2geo(adj.x, adj.y, adj.z, latDeg, lonDeg, hEllip);
+        st.geo.lat = latDeg;
+        st.geo.lon = lonDeg;
+        st.geo.h  = hEllip;
+
+        try {
+            UTMResult utm = pu.WGS84ToUTM(latDeg, lonDeg, hEllip);
+            st.easting  = utm.easting;
+            st.northing = utm.northing;
+        } catch (...) {}
+    }
+}
+
+void NetworkAdjustment::setProjectFolder(QString &folder)
+{
+    m_projectFolder = folder;
 }

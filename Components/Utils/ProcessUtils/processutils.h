@@ -148,6 +148,7 @@ public:
     bool parseSolutionStat(const QString &statFilePath, PosData &out);
     UTMResult WGS84ToUTM(double lat, double lon, double alt);
     void generateKMLFromPosData(const QMap<QString, PosData> &posData,const QString &filePath);
+    void ecef2geo(double X, double Y, double Z, double &latDeg, double &lonDeg, double &h);
 
 private:
     static void updateAggregates(PosData &p, const EpochRecord &er);

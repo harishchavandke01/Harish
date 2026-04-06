@@ -107,7 +107,7 @@ struct SubnetworkInfo {
     QVector<int> baselineIndices;
     QStringList fixedUIDs;
     bool isConstrained = false;
-    bool hasResult     = false;
+    bool hasResult = false;
 };
 
 struct StationPrecision {
@@ -117,7 +117,6 @@ struct StationPrecision {
     double semiMajor = NAN;
     double semiMinor = NAN;
     double ellipseAzimuthDeg = NAN;
-
     double horizPrecision95 = NAN;
     double vertPrecision95 = NAN;
 };
@@ -136,8 +135,6 @@ struct SubnetworkResult {
     bool success = false;
     bool constrained = true;
     bool usedCovariance = true;
-    // QMap<QString, QVector3D> adjustedECEF;
-    // QMap<QString, QVector3D> stationCorrections;
 
     QMap<QString, Vector3d64> adjustedECEF;
     QMap<QString, Vector3d64> stationCorrections;
@@ -146,11 +143,21 @@ struct SubnetworkResult {
 
     struct Residual {
         QString base, rover;
+        //observed baseline component
+        double obsX =0, obsY = 0, obsZ = 0;
+        //adjsuted baseline component
+        double adjX =0, adjY = 0, adjZ = 0;
+
+        //residuals v = obs - adj
         double vX = 0, vY = 0, vZ = 0;
         double vNorm = 0;
+
         double tauX = 0, tauY = 0, tauZ = 0;
         double standardizedResidual = 0;
-        bool   tauFailed = false;
+        bool tauFailed = false;
+
+        //redundancy numbers
+        double redundancyX = 0, redundancyY = 0, redundancyZ = 0;
     };
     QVector<Residual> residuals;
 

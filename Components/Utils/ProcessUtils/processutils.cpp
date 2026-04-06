@@ -69,6 +69,31 @@ static double projGeoidUndulation(PJ *P, double latDeg, double lonDeg, double hE
     return hEllip - H;
 }
 
+void ProcessUtils::ecef2geo(double X, double Y, double Z, double &latDeg, double &lonDeg, double &h)
+{
+    double p = std::sqrt(X * X + Y * Y);
+    lonDeg = std::atan2(Y, X) * (180.0 / M_PI);
+
+    if (p < 1e-10) {
+        latDeg = (Z >= 0.0) ? 90.0 : -90.0;
+        h = std::fabs(Z) - WGS84_A * std::sqrt(1.0 - WGS84_E2);
+        return;
+    }
+
+    double lat = std::atan2(Z, p * (1.0 - WGS84_E2));
+    for (int i = 0; i < 10; ++i) {
+        double sinLat = std::sin(lat);
+        double N = WGS84_A / std::sqrt(1.0 - WGS84_E2 * sinLat * sinLat);
+        lat = std::atan2(Z + WGS84_E2 * N * sinLat, p);
+    }
+    double sinLat = std::sin(lat);
+    double cosLat = std::cos(lat);
+    double N = WGS84_A / std::sqrt(1.0 - WGS84_E2 * sinLat * sinLat);
+    h = (cosLat > 1e-10) ? p / cosLat - N
+                         : std::fabs(Z) / sinLat - N * (1.0 - WGS84_E2);
+    latDeg = lat * (180.0 / M_PI);
+}
+
 void ProcessUtils::updateAggregates(PosData &p, const EpochRecord &er)
 {
     if (p.agg.n_epochs == 0) {

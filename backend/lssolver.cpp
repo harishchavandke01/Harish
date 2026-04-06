@@ -496,7 +496,7 @@
 
 static constexpr double CONV_EPS = 1e-6;
 static constexpr int MAX_INNER = 10;
-static constexpr int MAX_OUTER = 1;
+static constexpr int MAX_OUTER = 5;
 // static constexpr double SCALE_95 = 1.960;
 static constexpr double SCALE_95_1D = 1.9600;   // 1D: normal distribution 95%
 static constexpr double SCALE_95_2D = 2.4477;   // 2D: chi² with 2 DOF, 95% = sqrt(5.991)
@@ -764,11 +764,23 @@ void LSSolver::populateResult(const Eigen::VectorXd &v, const Eigen::MatrixXd &P
         SubnetworkResult::Residual r;
         r.base  = bl.fromStationId;
         r.rover = bl.toStationId;
+        //observered baseline vector
+        r.obsX = bl.dX;
+        r.obsY = bl.dY;
+        r.obsZ = bl.dZ;
+
+        // v = remaining misclosure after adjustment
         r.vX = v(row);
         r.vY = v(row + 1);
         r.vZ = v(row + 2);
         r.vNorm = v.segment(row, 3).norm();
 
+        //adjusted baseline vector
+        r.adjX = r.obsX -r.vX;
+        r.adjY = r.obsY -r.vY;
+        r.adjZ = r.obsZ - r.vZ;
+
+        //standarized residuals - tau test
         auto tau_for = [&](int i) -> double {
             double q = Q_vv(row + i, row + i);
             if (q <= 0.0) return 0.0;
@@ -781,6 +793,15 @@ void LSSolver::populateResult(const Eigen::VectorXd &v, const Eigen::MatrixXd &P
         r.tauZ = tau_for(2);
         r.standardizedResidual = std::max({std::abs(r.tauX), std::abs(r.tauY), std::abs(r.tauZ)});
         r.tauFailed = (r.standardizedResidual > tau_crit);
+
+        {
+            Eigen::Matrix3d Pk  = P.block(row, row, 3, 3);
+            Eigen::Matrix3d Qvk = Q_vv.block(row, row, 3, 3);
+            Eigen::Matrix3d Rk  = Pk * Qvk;
+            r.redundancyX = std::max(0.0, std::min(1.0, Rk(0, 0)));
+            r.redundancyY = std::max(0.0, std::min(1.0, Rk(1, 1)));
+            r.redundancyZ = std::max(0.0, std::min(1.0, Rk(2, 2)));
+        }
         result.residuals.append(r);
     }
 }

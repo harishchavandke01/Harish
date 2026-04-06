@@ -18,10 +18,12 @@ class NetworkAdjustment : public QWidget
 
 public:
     explicit NetworkAdjustment(ProjectContext *_projectContext, QWidget*parent = nullptr);
+    void setProjectFolder(QString &folder);
 
 private:
     ProjectContext *projectContext;
     AdjustmentOptions adjOptions;
+    QString m_projectFolder;
 
     QWidget*leftWidget;
     QLabel *heading;
@@ -67,6 +69,7 @@ private:
     void hideStatsCard();
 
     void startNextSubnetJob();
+    void propagateAdjustedCoordinates(const SubnetworkResult &result);
 
 private slots:
     void onSetControlsClicked();

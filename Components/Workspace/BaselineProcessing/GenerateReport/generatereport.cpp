@@ -282,7 +282,7 @@ void GenerateReport::savePDF(QString HTMLBody, const QString &_outPath)
               <img src=':/images/images/surveypod.png' style='max-width:50px; height:auto;' />
             </td>
             <td style="vertical-align:middle; font-weight:bold; font-size:25px;">
-              <b>Survepod (Nibrus Technologies Pvt Ltd)</b>
+              <b>SurveyPod (Nibrus Technologies Pvt Ltd)</b>
             </td>
           </tr>
         </table>
