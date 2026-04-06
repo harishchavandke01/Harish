@@ -572,25 +572,53 @@ bool LSSolver::hasValidCovariance(const ProjectBaseline &bl) const
     return std::abs(C.determinant()) > 1e-30;
 }
 
+Eigen::Matrix3d LSSolver::setupErrorCovariance(const ProjectBaseline &bl) const
+{
+    // Antenna height error propagates along the local radial (up) direction.
+    // Centering error propagates in the horizontal plane (perpendicular to radial).
+    // Both endpoints (from and to) contribute independently.
+    double sh2 = m_options.antennaHeightError * m_options.antennaHeightError;
+    double sc2 = m_options.centeringError     * m_options.centeringError;
+
+    Eigen::Matrix3d dC = Eigen::Matrix3d::Zero();
+    QString fromC = m_uidToCanonical.value(bl.from, bl.from);
+    QString toC   = m_uidToCanonical.value(bl.to,   bl.to);
+
+    for (const QString &uid : {fromC, toC}) {
+        Eigen::Vector3d X = m_pos.value(uid, Eigen::Vector3d::Zero());
+        double norm = X.norm();
+        if (norm < 1.0) continue;
+        Eigen::Vector3d nHat = X / norm;
+        // radial component (antenna height error)
+        dC += sh2 * (nHat * nHat.transpose());
+        // horizontal component (centering error)
+        dC += sc2 * (Eigen::Matrix3d::Identity() - nHat * nHat.transpose());
+    }
+    return dC;
+}
+
 Eigen::Matrix3d LSSolver::weightBlock(const ProjectBaseline &bl) const
 {
     double s2 = m_options.aPrioriScalar * m_options.aPrioriScalar;
+    Eigen::Matrix3d C;
     if (m_options.useCovariance && hasValidCovariance(bl)) {
         qDebug()<<"inside the weight block calculations\n";
-        Eigen::Matrix3d C;
         for (int i = 0; i < 3; i++)
             for (int j = 0; j < 3; j++)
                 C(i, j) = s2 * bl.cov[i][j];
-        return C.inverse();
+    } else {
+        double sigH2 = s2 * m_options.defaultSigmaH * m_options.defaultSigmaH;
+        double sigV2 = s2 * m_options.defaultSigmaV * m_options.defaultSigmaV;
+        C = Eigen::Matrix3d::Zero();
+        C(0, 0) = sigH2;
+        C(1, 1) = sigH2;
+        C(2, 2) = sigV2;
     }
 
-    double wH = 1.0 / (s2 * m_options.defaultSigmaH * m_options.defaultSigmaH);
-    double wV = 1.0 / (s2 * m_options.defaultSigmaV * m_options.defaultSigmaV);
-    Eigen::Matrix3d W = Eigen::Matrix3d::Zero();
-    W(0, 0) = wH;
-    W(1, 1) = wH;
-    W(2, 2) = wV;
-    return W;
+    // Inflate with setup errors (antenna height + centering) from both endpoints
+    C += setupErrorCovariance(bl);
+
+    return C.inverse();
 }
 
 void LSSolver::buildSystem(const QVector<ProjectBaseline> &baselines, Eigen::MatrixXd &A, Eigen::VectorXd &w, Eigen::MatrixXd &P) const

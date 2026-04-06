@@ -224,6 +224,8 @@ struct AdjustmentOptions {
     double aPrioriScalar = 1.0;
     double defaultSigmaH = 0.010;
     double defaultSigmaV = 0.020;
+    double antennaHeightError = 0.003;
+    double centeringError     = 0.000;
     double xx;
     double xy;
     double xz;

@@ -92,6 +92,7 @@ private:
     void buildSystem(const QVector<ProjectBaseline> &baselines, Eigen::MatrixXd &A, Eigen::VectorXd &w, Eigen::MatrixXd &P) const;
 
     Eigen::Matrix3d weightBlock(const ProjectBaseline &bl) const;
+    Eigen::Matrix3d setupErrorCovariance(const ProjectBaseline &bl) const;
     bool hasValidCovariance(const ProjectBaseline &bl) const;
 
     double tauCritical(int dof) const;

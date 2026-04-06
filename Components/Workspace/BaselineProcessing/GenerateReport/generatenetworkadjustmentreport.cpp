@@ -109,6 +109,8 @@ tr:nth-child(even) td { background:#f4f7fb; }
         "<tr><td><b>A Priori Scalar</b></td><td>%3</td></tr>"
         "<tr><td><b>Default Horizontal &sigma;</b></td><td>%4 m</td></tr>"
         "<tr><td><b>Default Vertical &sigma;</b></td><td>%5 m</td></tr>"
+        "<tr><td><b>Error in Height of Antenna (GNSS)</b></td><td>%6 m</td></tr>"
+        "<tr><td><b>Centering Error (GNSS)</b></td><td>%7 m</td></tr>"
         "</table>")
             .arg(ar.subnetworkResults.isEmpty() ? "—"
                  : (ar.subnetworkResults.constBegin()->constrained
@@ -117,7 +119,9 @@ tr:nth-child(even) td { background:#f4f7fb; }
             .arg(options.useCovariance ? "Yes" : "No")
             .arg(QString::number(options.aPrioriScalar, 'f', 4))
             .arg(QString::number(options.defaultSigmaH, 'f', 4))
-            .arg(QString::number(options.defaultSigmaV, 'f', 4));
+            .arg(QString::number(options.defaultSigmaV, 'f', 4))
+            .arg(QString::number(options.antennaHeightError, 'f', 4))
+            .arg(QString::number(options.centeringError, 'f', 4));
 
     // -----------------------------------------------------------------------
     // 2. Control (Fixed) Stations

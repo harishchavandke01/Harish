@@ -250,9 +250,53 @@ void AdjustNetworkDialog::buildWeightingTab()
     hlay1->addWidget(sigmaVLabel);
     hlay1->addWidget(sigmaVSpin);
 
+    // Set-Up Errors (GNSS) — matches TBC "Adjustment Settings → Set-Up Errors → GNSS"
+    QLabel *setupErrorsTitle = new QLabel("Set-Up Errors (GNSS):");
+    setupErrorsTitle->setStyleSheet("font-size:12px; font-weight:bold;");
+
+    QLabel *antHeightLabel = new QLabel("Error in Height of Antenna:");
+    antHeightLabel->setStyleSheet("font-size:12px;");
+    antennaHeightErrorSpin = new QDoubleSpinBox();
+    antennaHeightErrorSpin->setRange(0.000, 0.100);
+    antennaHeightErrorSpin->setSingleStep(0.001);
+    antennaHeightErrorSpin->setDecimals(4);
+    antennaHeightErrorSpin->setSuffix("  m");
+    antennaHeightErrorSpin->setValue(options.antennaHeightError);
+    antennaHeightErrorSpin->setFixedWidth(110);
+    antennaHeightErrorSpin->setToolTip(
+        "Uncertainty in antenna height measurement.\n"
+        "Propagates along the local vertical (radial) direction.\n"
+        "TBC default: 0.003 m");
+
+    QLabel *centeringLabel = new QLabel("Centering Error:");
+    centeringLabel->setStyleSheet("font-size:12px;");
+    centeringErrorSpin = new QDoubleSpinBox();
+    centeringErrorSpin->setRange(0.000, 0.100);
+    centeringErrorSpin->setSingleStep(0.001);
+    centeringErrorSpin->setDecimals(4);
+    centeringErrorSpin->setSuffix("  m");
+    centeringErrorSpin->setValue(options.centeringError);
+    centeringErrorSpin->setFixedWidth(110);
+    centeringErrorSpin->setToolTip(
+        "Tribrach centering uncertainty over the mark.\n"
+        "Propagates in the horizontal plane.\n"
+        "TBC default: 0.000 m");
+
+    QHBoxLayout *hlay2 = new QHBoxLayout();
+    hlay2->setContentsMargins(0, 0, 0, 0);
+    hlay2->addWidget(antHeightLabel);
+    hlay2->addWidget(antennaHeightErrorSpin);
+    hlay2->addSpacing(16);
+    hlay2->addWidget(centeringLabel);
+    hlay2->addWidget(centeringErrorSpin);
+    hlay2->addStretch();
+
     outerLay->addWidget(useCovCheck);
     outerLay->addSpacing(6);
     outerLay->addLayout(hlay1);
+    outerLay->addSpacing(10);
+    outerLay->addWidget(setupErrorsTitle);
+    outerLay->addLayout(hlay2);
     outerLay->addStretch();
 
     tabs->addTab(page, "Weighting");
@@ -282,10 +326,12 @@ void AdjustNetworkDialog::onAdjustClicked()
             "subnetwork to adjust.</span>");
         return;
     }
-    options.useCovariance  = useCovCheck->isChecked();
-    options.aPrioriScalar  = aPrioriSpin->value();
-    options.defaultSigmaH  = sigmaHSpin->value();
-    options.defaultSigmaV  = sigmaVSpin->value();
+    options.useCovariance      = useCovCheck->isChecked();
+    options.aPrioriScalar      = aPrioriSpin->value();
+    options.defaultSigmaH      = sigmaHSpin->value();
+    options.defaultSigmaV      = sigmaVSpin->value();
+    options.antennaHeightError = antennaHeightErrorSpin->value();
+    options.centeringError     = centeringErrorSpin->value();
 
     CovarianceMatrix *cvmat = new CovarianceMatrix(projectContext);
     int result = cvmat->exec();
