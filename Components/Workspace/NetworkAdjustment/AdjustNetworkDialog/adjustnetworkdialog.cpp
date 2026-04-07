@@ -204,8 +204,6 @@ void AdjustNetworkDialog::buildWeightingTab()
     outerLay->setSpacing(14);
 
     useCovCheck = new CustomCheckBox("Use baseline covariance matrices", options.useCovariance);
-
-
     QLabel *aPrioriLabel = new QLabel("A priori scalar:");
     aPrioriLabel->setStyleSheet("font-size:12px;");
     aPrioriSpin = new QDoubleSpinBox();
@@ -241,6 +239,25 @@ void AdjustNetworkDialog::buildWeightingTab()
     sigmaVSpin->setFixedWidth(100);
     sigmaVSpin->setToolTip("Fallback vertical precision for ECEF Z component.");
 
+
+    QLabel *setupErrorsLabel = new QLabel("Set up errors\n");
+
+    QLabel *antHeightErrLabel = new QLabel("Error in height of antenna : ");
+    antHeightErrorSpin = new QDoubleSpinBox();
+    antHeightErrorSpin->setRange(0.0000, 0.1);
+    antHeightErrorSpin->setSingleStep(0.0001);
+    antHeightErrorSpin->setDecimals(4);
+    antHeightErrorSpin->setValue(options.antennaHeightError);
+    antHeightErrorSpin->setToolTip("Uncertainty in antenna height measurement.\nPropagates along the vertical direction");
+
+    QLabel *centeringErrorLabel = new QLabel("Centering error : ");
+    centeringErrorSpin = new QDoubleSpinBox();
+    centeringErrorSpin->setRange(0.0000, 0.1);
+    centeringErrorSpin->setSingleStep(0.0001);
+    centeringErrorSpin->setDecimals(4);
+    centeringErrorSpin->setValue(options.centeringError);
+    centeringErrorSpin->setToolTip("centering uncertainty over the mark\nPropagates in horizontal plan.");
+
     QHBoxLayout * hlay1 = new QHBoxLayout();
     hlay1->setContentsMargins(0,0,0,0);
     hlay1->addWidget(aPrioriLabel);
@@ -250,9 +267,19 @@ void AdjustNetworkDialog::buildWeightingTab()
     hlay1->addWidget(sigmaVLabel);
     hlay1->addWidget(sigmaVSpin);
 
+    QHBoxLayout * hlay2 = new QHBoxLayout();
+    hlay2->setContentsMargins(0,0,0,0);
+    hlay2->addWidget(antHeightErrLabel);
+    hlay2->addWidget(antHeightErrorSpin);
+    hlay2->addSpacing(20);
+    hlay2->addWidget(centeringErrorLabel);
+    hlay2->addWidget(centeringErrorSpin);
+
     outerLay->addWidget(useCovCheck);
     outerLay->addSpacing(6);
     outerLay->addLayout(hlay1);
+    outerLay->addWidget(setupErrorsLabel);
+    outerLay->addLayout(hlay2);
     outerLay->addStretch();
 
     tabs->addTab(page, "Weighting");
@@ -286,6 +313,10 @@ void AdjustNetworkDialog::onAdjustClicked()
     options.aPrioriScalar  = aPrioriSpin->value();
     options.defaultSigmaH  = sigmaHSpin->value();
     options.defaultSigmaV  = sigmaVSpin->value();
+    options.antennaHeightError  = antHeightErrorSpin->value();
+    options.centeringError = centeringErrorSpin->value();
+    qDebug()<<"options.antennaHeightError = "<<options.antennaHeightError;
+    qDebug()<<"options.centeringError = "<<options.centeringError;
 
     CovarianceMatrix *cvmat = new CovarianceMatrix(projectContext);
     int result = cvmat->exec();

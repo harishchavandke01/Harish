@@ -443,7 +443,7 @@ void NetworkAdjustment::onReportClicked()
     GenerateNetworkAdjustmentReport * gnar = new GenerateNetworkAdjustmentReport();
     bool ok = gnar->savePDF(projectContext, adjOptions, filePath);
     if(ok){
-        CustomMessageBox *mb = new CustomMessageBox("INFO", QString("Network adjustment report generated successfully and saved at\n").arg(filePath),"OK");
+        CustomMessageBox *mb = new CustomMessageBox("INFO", QString("Network adjustment report generated successfully and saved at%1\n").arg(filePath),"OK");
         mb->exec();
         QDesktopServices::openUrl(QUrl::fromLocalFile(filePath));
         return;
@@ -512,7 +512,7 @@ void NetworkAdjustment::propagateAdjustedCoordinates(const SubnetworkResult &res
         pu.ecef2geo(adj.x, adj.y, adj.z, latDeg, lonDeg, hEllip);
         st.geo.lat = latDeg;
         st.geo.lon = lonDeg;
-        st.geo.h  = hEllip;
+        st.geo.h = hEllip;
 
         try {
             UTMResult utm = pu.WGS84ToUTM(latDeg, lonDeg, hEllip);

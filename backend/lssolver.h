@@ -35,6 +35,7 @@
 //     bool runInnerLoop(Eigen::VectorXd &dx_final, Eigen::MatrixXd &N_inv, Eigen::MatrixXd &A_final, Eigen::VectorXd &w_final, Eigen::MatrixXd &P_final, int outerIter);
 //     void buildSystem(const QVector<ProjectBaseline> &baselines, Eigen::MatrixXd &A, Eigen::VectorXd &w, Eigen::MatrixXd &P) const;
 
+//     Eigen::Matrix3d setupErrorCovariance(const ProjectBaseline &bl) const;
 //     Eigen::Matrix3d weightBlock(const ProjectBaseline &bl) const;
 //     bool hasValidCovariance(const ProjectBaseline &bl) const;
 
@@ -46,9 +47,6 @@
 // };
 
 // #endif // LSSOLVER_H
-
-
-
 
 
 
@@ -88,9 +86,10 @@ private:
     void initPositions();
     void filterBaselines();
 
-    bool runInnerLoop(Eigen::VectorXd &dx_final, Eigen::MatrixXd &N_inv, Eigen::MatrixXd &A_final, Eigen::VectorXd &w_final, Eigen::MatrixXd &P_final, int outerIter);
+    bool runInnerLoop(Eigen::VectorXd &dx_final, Eigen::MatrixXd &N_inv, Eigen::MatrixXd &A_final, Eigen::VectorXd &w_final, Eigen::MatrixXd &P_final, int outerIter, int &iterations);
     void buildSystem(const QVector<ProjectBaseline> &baselines, Eigen::MatrixXd &A, Eigen::VectorXd &w, Eigen::MatrixXd &P) const;
 
+    Eigen::Matrix3d setupErrorCovariance(const ProjectBaseline &bl) const;
     Eigen::Matrix3d weightBlock(const ProjectBaseline &bl) const;
     bool hasValidCovariance(const ProjectBaseline &bl) const;
 

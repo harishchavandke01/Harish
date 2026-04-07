@@ -29,326 +29,6 @@ static QString tdTau(bool failed)
                   : QStringLiteral("");
 }
 
-// QString GenerateNetworkAdjustmentReport::buildHTML(const ProjectContext *ctx,
-//                                                    const AdjustmentOptions &options)
-// {
-//     const AdjustmentResult &ar = ctx->adjustmentResult;
-//     QString css = R"(
-//         <style>
-//         body  { font-family:'Segoe UI',Arial,sans-serif; font-size:9pt; color:#1a1a1a; }
-//         h1    { font-size:16pt; color:#1b3a6b; margin-bottom:2px; }
-//         h2    { font-size:11pt; color:#1b3a6b; margin:14px 0 4px 0;
-//                 border-bottom:2px solid #1b3a6b; padding-bottom:3px; }
-//         p     { margin:3px 0; }
-//         table { width:100%; border-collapse:collapse; margin-bottom:10px; font-size:8.5pt; }
-//         th    { background:#1b3a6b; color:#fff; padding:5px 8px; text-align:left; }
-//         td    { border:1px solid #c8d0da; padding:4px 8px; vertical-align:middle; }
-//         tr:nth-child(even) td { background:#f4f7fb; }
-//         .kv   { width:50%; }
-//         .kv td{ border:none; padding:2px 8px; }
-//         .note { font-size:8pt; color:#555; font-style:italic; margin-top:6px; }
-//         .chi-pass { color:#1a7a42; font-weight:bold; }
-//         .chi-fail { color:#c0392b; font-weight:bold; }
-//         </style>
-//         )";
-
-//     QString html;
-//     html.reserve(1 << 17);
-
-//     html += css;
-//     html += QStringLiteral(
-//                 "<h1>Network Adjustment Report</h1>"
-//                 "<p style='font-size:8pt;color:#555;margin-bottom:10px;'>"
-//                 "Generated: %1 UTC | Software: SurveyPod (Nibrus Technologies)</p>")
-//                 .arg(QDateTime::currentDateTimeUtc().toString("yyyy-MM-dd HH:mm:ss"));
-
-//     html += QStringLiteral("<h2>1. Adjustment Configuration</h2>");
-//     html += QStringLiteral("<table class='kv'>"
-//                            "<tr><td><b>Adjustment Type</b></td><td>%1</td></tr>"
-//                            "<tr><td><b>Use Covariance Matrices</b></td><td>%2</td></tr>"
-//                            "<tr><td><b>A Priori Scalar</b></td><td>%3</td></tr>"
-//                            "<tr><td><b>Default Horizontal &sigma;</b></td><td>%4 m</td></tr>"
-//                            "<tr><td><b>Default Vertical &sigma;</b></td><td>%5 m</td></tr>"
-//                            "</table>").arg(ar.subnetworkResults.isEmpty() ? "—"
-//                                                     : (ar.subnetworkResults.constBegin()->constrained
-//                                                            ? "Constrained (Control Points Fixed)"
-//                                                            : "Free Network (Minimum Constraint)"))
-//                 .arg(options.useCovariance ? "Yes" : "No")
-//                 .arg(QString::number(options.aPrioriScalar, 'f', 4))
-//                 .arg(QString::number(options.defaultSigmaH, 'f', 4))
-//                 .arg(QString::number(options.defaultSigmaV, 'f', 4));
-
-
-//     //fixed stations
-//     html += QStringLiteral("<h2>2. Control Stations (Fixed)</h2>");
-
-//     QMap<QString, const ProjectStation *> fixedStations;
-//     for (auto it = ctx->stations.constBegin(); it != ctx->stations.constEnd(); ++it) {
-//         if (it->isFixed)
-//             fixedStations.insert(it->stationId, &(*it));
-//     }
-
-//     if (fixedStations.isEmpty()) {
-//         html += QStringLiteral("<p>No fixed control stations — Free Network adjustment.</p>");
-//     } else {
-//         html += QStringLiteral(
-//             "<table>"
-//             "<tr><th>Station</th><th>Latitude</th><th>Longitude</th>"
-//             "<th>Ellip. Ht (m)</th><th>Easting (m)</th><th>Northing (m)</th>"
-//             "<th>ECEF X (m)</th><th>ECEF Y (m)</th><th>ECEF Z (m)</th></tr>");
-//         for (auto it = fixedStations.constBegin(); it != fixedStations.constEnd(); ++it) {
-//             const ProjectStation *s = it.value();
-//             html += QString("<tr>"
-//                             "<td>%1</td><td>%2</td><td>%3</td>"
-//                             "<td>%4</td><td>%5</td><td>%6</td>"
-//                             "<td>%7</td><td>%8</td><td>%9</td>"
-//                             "</tr>")
-//                         .arg(s->stationId)
-//                         .arg(s->geo.lat)
-//                         .arg(s->geo.lon)
-//                         .arg(fmt(s->geo.h, 4))
-//                         .arg(fmt(s->easting, 3))
-//                         .arg(fmt(s->northing, 3))
-//                         .arg(fmt(s->ecef.X, 4))
-//                         .arg(fmt(s->ecef.Y, 4))
-//                         .arg(fmt(s->ecef.Z, 4));
-//         }
-//         html += QStringLiteral("</table>");
-//     }
-
-//     for (auto sit = ar.subnetworkResults.constBegin();
-//          sit != ar.subnetworkResults.constEnd(); ++sit)
-//     {
-//         const SubnetworkResult &sr = sit.value();
-//         if (!sr.success) continue;
-
-//         QString snetTag = QString("<br/><hr/><h2 style='color:#2c3e50;'>Subnetwork %1 — %2</h2>")
-//                               .arg(sr.subnetworkIndex)
-//                               .arg(sr.constrained ? "Constrained" : "Free Network");
-//         html += snetTag;
-
-//         html += QStringLiteral("<h2>3. Adjusted Station Coordinates</h2>");
-//         html += QStringLiteral(
-//             "<table>"
-//             "<tr><th>Station</th>"
-//             "<th>Latitude</th><th>Longitude</th><th>Ellip. Ht (m)</th>"
-//             "<th>Easting (m)</th><th>Northing (m)</th>"
-//             "<th>Adj. X (m)</th><th>Adj. Y (m)</th><th>Adj. Z (m)</th>"
-//             "<th>dX (mm)</th><th>dY (mm)</th><th>dZ (mm)</th>"
-//             "</tr>");
-
-//         QMap<QString, QString> stationIdToUid;  // stationId → first uid
-//         for (auto it = ar.mergedAdjustedECEF.constBegin();
-//              it != ar.mergedAdjustedECEF.constEnd(); ++it)
-//         {
-//             const QString &uid = it.key();
-//             if (!ctx->stations.contains(uid)) continue;
-//             const QString &sid = ctx->stations[uid].stationId;
-//             if (!stationIdToUid.contains(sid))
-//                 stationIdToUid[sid] = uid;
-//         }
-
-//         ProcessUtils pu;
-//         for (auto it = stationIdToUid.constBegin(); it != stationIdToUid.constEnd(); ++it) {
-//             const QString &sid = it.key();
-//             const QString &uid = it.value();
-//             const ProjectStation &st = ctx->stations[uid];
-
-//             // Adjusted ECEF
-//             Vector3d64 adj = ar.mergedAdjustedECEF.value(uid, Vector3d64(st.ecef.X, st.ecef.Y, st.ecef.Z));
-
-//             // Corrections in mm
-//             Vector3d64 corr = sr.stationCorrections.value(uid, Vector3d64(0, 0, 0));
-
-//             // Convert adjusted ECEF → geodetic using shared ProcessUtils helper
-//             double latAdj = 0, lonAdj = 0, hAdj = 0;
-//             ProcessUtils pu;
-//             pu.ecef2geo(adj.x, adj.y, adj.z, latAdj, lonAdj, hAdj);
-
-//             // Adjusted UTM
-//             double eastAdj = st.easting, northAdj = st.northing;
-//             try {
-//                 UTMResult utm = pu.WGS84ToUTM(latAdj, lonAdj, hAdj);
-//                 eastAdj  = utm.easting;
-//                 northAdj = utm.northing;
-//             } catch (...) {}
-
-//             html += QString("<tr>"
-//                             "<td>%1</td>"
-//                             "<td>%2</td><td>%3</td><td>%4</td>"
-//                             "<td>%5</td><td>%6</td>"
-//                             "<td>%7</td><td>%8</td><td>%9</td>"
-//                             "<td>%10</td><td>%11</td><td>%12</td>"
-//                             "</tr>")
-//                         .arg(sid)
-//                         .arg(latAdj)
-//                         .arg(lonAdj)
-//                         .arg(fmt(hAdj, 4))
-//                         .arg(fmt(eastAdj, 3))
-//                         .arg(fmt(northAdj, 3))
-//                         .arg(fmt(adj.x, 4))
-//                         .arg(fmt(adj.y, 4))
-//                         .arg(fmt(adj.z, 4))
-//                         .arg(fmt(corr.x * 1000.0, 2))
-//                         .arg(fmt(corr.y * 1000.0, 2))
-//                         .arg(fmt(corr.z * 1000.0, 2));
-//         }
-//         html += QStringLiteral("</table>");
-//         html += QStringLiteral("<p class='note'>dX/dY/dZ: coordinate corrections applied during adjustment (mm).</p>");
-
-//         html += QStringLiteral("<h2>4. Baseline Residuals</h2>");
-//         html += QStringLiteral(
-//             "<table>"
-//             "<tr>"
-//             "<th>Baseline</th>"
-//             "<th>Obs &Delta;X (m)</th><th>Obs &Delta;Y (m)</th><th>Obs &Delta;Z (m)</th>"
-//             "<th>Adj &Delta;X (m)</th><th>Adj &Delta;Y (m)</th><th>Adj &Delta;Z (m)</th>"
-//             "<th>vX (mm)</th><th>vY (mm)</th><th>vZ (mm)</th>"
-//             "<th>|v| (mm)</th>"
-//             "<th>&tau;X</th><th>&tau;Y</th><th>&tau;Z</th>"
-//             "<th>r<sub>X</sub></th><th>r<sub>Y</sub></th><th>r<sub>Z</sub></th>"
-//             "<th>Status</th>"
-//             "</tr>");
-
-//         for (const SubnetworkResult::Residual &res : sr.residuals) {
-//             QString style = res.tauFailed ? " style='background:#fff0f0;'" : "";
-//             html += QString("<tr%1>"
-//                             "<td>%2 → %3</td>"
-//                             "<td>%4</td><td>%5</td><td>%6</td>"
-//                             "<td>%7</td><td>%8</td><td>%9</td>"
-//                             "<td>%10</td><td>%11</td><td>%12</td>"
-//                             "<td>%13</td>"
-//                             "<td%14>%15</td><td%14>%16</td><td%14>%17</td>"
-//                             "<td>%18</td><td>%19</td><td>%20</td>"
-//                             "%21"
-//                             "</tr>")
-//                         .arg(style)
-//                         .arg(res.base).arg(res.rover)
-//                         // observed
-//                         .arg(fmt(res.obsX, 5)).arg(fmt(res.obsY, 5)).arg(fmt(res.obsZ, 5))
-//                         // adjusted
-//                         .arg(fmt(res.adjX, 5)).arg(fmt(res.adjY, 5)).arg(fmt(res.adjZ, 5))
-//                         // residuals in mm
-//                         .arg(fmt(res.vX * 1000.0, 2))
-//                         .arg(fmt(res.vY * 1000.0, 2))
-//                         .arg(fmt(res.vZ * 1000.0, 2))
-//                         .arg(fmt(res.vNorm * 1000.0, 2))
-//                         // tau
-//                         .arg(tdTau(res.tauFailed))
-//                         .arg(fmt(res.tauX, 3))
-//                         .arg(fmt(res.tauY, 3))
-//                         .arg(fmt(res.tauZ, 3))
-//                         // redundancy
-//                         .arg(fmt(res.redundancyX, 3))
-//                         .arg(fmt(res.redundancyY, 3))
-//                         .arg(fmt(res.redundancyZ, 3))
-//                         // pass/fail
-//                         .arg(res.tauFailed
-//                                  ? QStringLiteral("<td style='color:#c0392b;font-weight:bold;'>FAIL</td>")
-//                                  : QStringLiteral("<td style='color:#1a7a42;font-weight:bold;'>PASS</td>"));
-//         }
-//         html += QStringLiteral("</table>");
-//         html += QStringLiteral(
-//             "<p class='note'>"
-//             "r: redundancy number per component (0 = unchecked, 1 = fully controlled). "
-//             "&tau;: standardised residual; |&tau;| &gt; &tau;<sub>crit</sub> flags an outlier."
-//             "</p>");
-
-//         html += QStringLiteral("<h2>5. Adjustment Statistics</h2>");
-
-//         auto chi2Approx = [](double alpha, int dof) -> double {
-//             if (dof <= 0) return 0.0;
-//             double z = (alpha < 0.5) ? -1.959964 : 1.959964;
-//             double k = static_cast<double>(dof);
-//             double t = 1.0 - 2.0 / (9.0 * k) + z * std::sqrt(2.0 / (9.0 * k));
-//             return std::max(0.0, k * t * t * t);
-//         };
-
-//         double chi2Lo = chi2Approx(0.025, sr.dof);
-//         double chi2Hi = chi2Approx(0.975, sr.dof);
-
-//         QString chiClass = sr.chiSquarePassed ? "chi-pass" : "chi-fail";
-//         QString chiStr   = QString("<span class='%1'>%2  [bounds: %3 – %4]</span>")
-//                              .arg(chiClass)
-//                              .arg(sr.chiSquarePassed ? "PASSED ✓" : "FAILED ✗")
-//                              .arg(fmt(chi2Lo, 3))
-//                              .arg(fmt(chi2Hi, 3));
-
-//         html += QString(
-//                     "<table class='kv'>"
-//                     "<tr><td><b>Degrees of Freedom (DOF)</b></td><td>%1</td></tr>"
-//                     "<tr><td><b>Reference Factor (&sigma;<sub>0</sub>)</b></td><td>%2</td></tr>"
-//                     "<tr><td><b>Weighted Sum of Squares (v<sup>T</sup>Pv)</b></td><td>%3</td></tr>"
-//                     "<tr><td><b>3D RMS of Residuals</b></td><td>%4 mm</td></tr>"
-//                     "<tr><td><b>Chi-Square Test (95% confidence)</b></td><td>%5</td></tr>"
-//                     "</table>")
-//                     .arg(sr.dof)
-//                     .arg(fmt(sr.sigma0, 6))
-//                     .arg(fmt(sr.chiSquareValue, 4))
-//                     .arg(fmt(sr.rms3D * 1000.0, 2))
-//                     .arg(chiStr);
-
-//         html += QStringLiteral(
-//             "<p class='note'>"
-//             "&sigma;<sub>0</sub> = &radic;(v<sup>T</sup>Pv / DOF).  "
-//             "Value close to 1.0 indicates the a priori weights are consistent with the data."
-//             "</p>");
-
-//         html += QStringLiteral("<h2>6. Station Precisions (95% Confidence)</h2>");
-//         html += QStringLiteral(
-//             "<table>"
-//             "<tr>"
-//             "<th>Station</th>"
-//             "<th>&sigma;<sub>E</sub> (m)</th>"
-//             "<th>&sigma;<sub>N</sub> (m)</th>"
-//             "<th>&sigma;<sub>U</sub> (m)</th>"
-//             "<th>Semi-Major (m)</th>"
-//             "<th>Semi-Minor (m)</th>"
-//             "<th>Azimuth (&deg;)</th>"
-//             "<th>95% Horiz (m)</th>"
-//             "<th>95% Vert (m)</th>"
-//             "</tr>");
-
-//         for (auto pit = sr.stationPrecisions.constBegin();
-//              pit != sr.stationPrecisions.constEnd(); ++pit)
-//         {
-//             const QString &uid = pit.key();
-//             const StationPrecision &sp = pit.value();
-//             QString stId = ctx->stations.contains(uid)
-//                                ? ctx->stations[uid].stationId : uid;
-//             html += QString("<tr>"
-//                             "<td>%1</td>"
-//                             "<td>%2</td><td>%3</td><td>%4</td>"
-//                             "<td>%5</td><td>%6</td><td>%7</td>"
-//                             "<td><b>%8</b></td><td><b>%9</b></td>"
-//                             "</tr>")
-//                         .arg(stId)
-//                         .arg(fmt(sp.sigmaE, 5))
-//                         .arg(fmt(sp.sigmaN, 5))
-//                         .arg(fmt(sp.sigmaU, 5))
-//                         .arg(fmt(sp.semiMajor, 5))
-//                         .arg(fmt(sp.semiMinor, 5))
-//                         .arg(fmt(sp.ellipseAzimuthDeg, 1))
-//                         .arg(fmt(sp.horizPrecision95, 5))
-//                         .arg(fmt(sp.vertPrecision95, 5));
-//         }
-//         html += QStringLiteral("</table>");
-//         html += QStringLiteral(
-//             "<p class='note'>"
-//             "95% Horizontal = 2.4477 &times; semi-major axis (&chi;<sup>2</sup><sub>2,0.05</sub> = 5.991). "
-//             "95% Vertical = 1.9600 &times; &sigma;<sub>U</sub> (normal distribution)."
-//             "</p>");
-
-//         if (!sr.iterationLog.isEmpty()) {
-//             html += QStringLiteral("<h2>7. Solver Log</h2><pre style='font-size:7.5pt;color:#333;'>");
-//             for (const QString &line : sr.iterationLog)
-//                 html += line.toHtmlEscaped() + QStringLiteral("\n");
-//             html += QStringLiteral("</pre>");
-//         }
-//     }
-//     return html;
-// }
-
 QString GenerateNetworkAdjustmentReport::buildHTML(const ProjectContext *ctx,
                                                    const AdjustmentOptions &options)
 {
@@ -356,12 +36,11 @@ QString GenerateNetworkAdjustmentReport::buildHTML(const ProjectContext *ctx,
     QString html;
     html.reserve(1 << 17);
 
-    html += "<div style='text-align:left; font-size:14pt; font-weight:bold; margin-bottom:20pt;'>"
+    html += "<div style='text-align:left; font-size:15pt; font-weight:bold; margin-bottom:20pt;'>"
             "Network Adjustment Report</div>";
     html += "<br><br>";
     html += "<p style='font-size:12pt; font-weight:bold;'>Adjustment Configuration</p>";
     html += "<table>";
-
     html += QString("<tr><td>Adjustment Type</td><td>%1</td></tr>")
                 .arg(ar.subnetworkResults.isEmpty() ? "—"
                                                     : (ar.subnetworkResults.constBegin()->constrained
@@ -371,95 +50,142 @@ QString GenerateNetworkAdjustmentReport::buildHTML(const ProjectContext *ctx,
                 .arg(options.useCovariance ? "Yes" : "No");
     html += QString("<tr><td>A Priori Scalar</td><td>%1</td></tr>")
                 .arg(QString::number(options.aPrioriScalar, 'f', 4));
-    html += QString("<tr><td>Default Horizontal σ</td><td>%1 m</td></tr>")
-                .arg(QString::number(options.defaultSigmaH, 'f', 4));
-    html += QString("<tr><td>Default Vertical σ</td><td>%1 m</td></tr>")
-                .arg(QString::number(options.defaultSigmaV, 'f', 4));
+    html += QString("<tr><td>Error in Height of Antenna</td><td>%1 m</td></tr>")
+                .arg(QString::number(options.antennaHeightError, 'f', 4));
+    html += QString("<tr><td>Centering Error</td><td>%1 m</td></tr>")
+                .arg(QString::number(options.centeringError, 'f', 4));
     html += "</table>";
 
-    html += "<br>";
-
-    html += "<p style='font-size:12pt; font-weight:bold;'>2. Control Stations (Fixed)</p>";
+    html += "<br><br>";
+    html += "<p style='font-size:12pt; font-weight:bold;'>Control Stations (Fixed)</p>";
     html += "<table><tr>"
             "<th>Station</th><th>Latitude</th><th>Longitude</th>"
-            "<th>Ellip. Ht</th><th>Easting</th><th>Northing</th>"
-            "<th>ECEF X</th><th>ECEF Y</th><th>ECEF Z</th></tr>";
-
+            "<th>Ellip. Ht</th><th>EGM08</th><th>Easting</th><th>Northing</th></tr>";
     for (auto it = ctx->stations.begin(); it != ctx->stations.end(); ++it) {
         if (!it->isFixed) continue;
-
         html += QString("<tr>"
                         "<td>%1</td><td>%2</td><td>%3</td>"
-                        "<td>%4</td><td>%5</td><td>%6</td>"
-                        "<td>%7</td><td>%8</td><td>%9</td>"
+                        "<td>%4</td><td>%5</td><td>%6</td><td>%7</td>"
                         "</tr>")
                     .arg(it->stationId)
                     .arg(it->geo.lat)
                     .arg(it->geo.lon)
-                    .arg(fmt(it->geo.h, 4))
+                    .arg(fmt(it->geo.h,4))
+                    .arg(fmt(it->geo.h,4))
                     .arg(fmt(it->easting, 3))
-                    .arg(fmt(it->northing, 3))
-                    .arg(fmt(it->ecef.X, 4))
-                    .arg(fmt(it->ecef.Y, 4))
-                    .arg(fmt(it->ecef.Z, 4));
+                    .arg(fmt(it->northing, 3));
     }
     html += "</table>";
-
+    html += "<br>";
     for (auto sit = ar.subnetworkResults.begin(); sit != ar.subnetworkResults.end(); ++sit)
     {
         const SubnetworkResult &sr = sit.value();
         if (!sr.success) continue;
-        html += "<br><br>";
+        html += "<br><hr><br>";
         html += QString("<p style='font-size:12pt; font-weight:bold;'>Subnetwork %1 — %2</p>")
-                    .arg(sr.subnetworkIndex)
-                    .arg(sr.constrained ? "Constrained" : "Free Network");
+                    .arg(sr.subnetworkIndex).arg(sr.constrained ? "Constrained" : "Free Network");
 
-        html += "<p style='font-size:12pt; font-weight:bold;'>3. Adjusted Station Coordinates</p>";
+        html += "<br>";
+        html += "<p style='font-size:12pt; font-weight:bold;'>Adjustment Statistics</p>";
+        html += QString("<table>"
+                        "<tr><td>Iterations</td><td>%1</td>"
+                        "<tr><td>DOF</td><td>%2</td></tr>"
+                        "<tr><td>Network reference factor</td><td>%3</td></tr>"
+                        "<tr><td>Precision confidence level</td><td>%4</td>"
+                        "<tr><td>Chi-square</td><td>%5</td></tr>"
+                        "</table>")
+                    .arg(sr.iterations)
+                    .arg(fmt(sr.dof,2))
+                    .arg(fmt(sr.sigma0,6))
+                    .arg("95%")
+                    .arg(sr.chiSquarePassed ? "PASSED" : "FAILED");
+
+        html +="<br><br>";
+
+        //grid coords
+        html += "<p style='font-size:12pt; font-weight:bold;'>Adjusted Grid Coordinates</p>";
         html += "<table><tr>"
-                "<th>Station</th><th>Latitude</th><th>Longitude</th><th>Ellip. Ht</th>"
-                "<th>Easting</th><th>Northing</th>"
-                "<th>Adj X</th><th>Adj Y</th><th>Adj Z</th>"
-                "<th>dX (mm)</th><th>dY (mm)</th><th>dZ (mm)</th>"
+                "<th>Station</th><th>Easting</th><th>Easting error</th><th>Northing</th>"
+                "<th>Northing error</th><th>EGM-08</th><th>EGM-08 error</th>"
                 "</tr>";
-
-        ProcessUtils pu;
 
         for (auto it = sr.stationCorrections.begin(); it != sr.stationCorrections.end(); ++it)
         {
             QString uid = it.key();
             if (!ctx->stations.contains(uid)) continue;
-
             const ProjectStation &st = ctx->stations[uid];
-            Vector3d64 adj = ar.mergedAdjustedECEF.value(uid,
-                                                         Vector3d64(st.ecef.X, st.ecef.Y, st.ecef.Z));
-
-            Vector3d64 corr = it.value();
-
-            double lat, lon, h;
-            pu.ecef2geo(adj.x, adj.y, adj.z, lat, lon, h);
-
             html += QString("<tr>"
                             "<td>%1</td><td>%2</td><td>%3</td><td>%4</td>"
                             "<td>%5</td><td>%6</td>"
-                            "<td>%7</td><td>%8</td><td>%9</td>"
-                            "<td>%10</td><td>%11</td><td>%12</td>"
+                            "<td>%7</td>"
                             "</tr>")
                         .arg(st.stationId)
-                        .arg(lat)
-                        .arg(lon)
-                        .arg(fmt(h,4))
                         .arg(fmt(st.easting,3))
+                        .arg("Eerr")
                         .arg(fmt(st.northing,3))
-                        .arg(fmt(adj.x,4))
-                        .arg(fmt(adj.y,4))
-                        .arg(fmt(adj.z,4))
-                        .arg(fmt(corr.x*1000,2))
-                        .arg(fmt(corr.y*1000,2))
-                        .arg(fmt(corr.z*1000,2));
+                        .arg("Nerr")
+                        .arg(fmt(st.geo.h, 4))
+                        .arg("Elerr");
+        }
+        html += "</table>";
+        html +="<br>";
+
+        //Geodetic coords
+        html += "<p style='font-size:12pt; font-weight:bold;'>Adjusted Geodetic Coordinates</p>";
+        html += "<table><tr>"
+                "<th>Station</th><th>Latitude</th><th>Lat error</th><th>Longitude</th>"
+                "<th>Lon error</th><th>Ellipsoidal</th><th>Ellip. error</th>"
+                "</tr>";
+        for (auto it = sr.stationCorrections.begin(); it != sr.stationCorrections.end(); ++it)
+        {
+            QString uid = it.key();
+            if (!ctx->stations.contains(uid)) continue;
+            const ProjectStation &st = ctx->stations[uid];
+            html += QString("<tr>"
+                            "<td>%1</td><td>%2</td><td>%3</td><td>%4</td>"
+                            "<td>%5</td><td>%6</td>"
+                            "<td>%7</td>"
+                            "</tr>")
+                        .arg(st.stationId)
+                        .arg(fmt(st.geo.lat,10))
+                        .arg("laterr")
+                        .arg(fmt(st.geo.lon,10))
+                        .arg("lonrr")
+                        .arg(fmt(st.geo.h, 4))
+                        .arg("Elerr");
+        }
+        html += "</table>";
+        html +="<br>";
+
+        //ECEF coords
+        html += "<p style='font-size:12pt; font-weight:bold;'>Adjusted ECEF Coordinates</p>";
+        html += "<table><tr>"
+                "<th>Station</th><th>X</th><th>X error</th><th>Y</th>"
+                "<th>Y error</th><th>Z</th><th>Z error</th><th>3D Error</th>"
+                "</tr>";
+        for (auto it = sr.stationCorrections.begin(); it != sr.stationCorrections.end(); ++it)
+        {
+            QString uid = it.key();
+            if (!ctx->stations.contains(uid)) continue;
+            const ProjectStation &st = ctx->stations[uid];
+            Vector3d64 adj = ar.mergedAdjustedECEF.value(uid, Vector3d64(st.ecef.X, st.ecef.Y, st.ecef.Z));
+            html += QString("<tr>"
+                            "<td>%1</td><td>%2</td><td>%3</td><td>%4</td>"
+                            "<td>%5</td><td>%6</td>"
+                            "<td>%7</td><td>%8</td>"
+                            "</tr>")
+                        .arg(st.stationId)
+                        .arg(fmt(adj.x,3))
+                        .arg("Xerr")
+                        .arg(fmt(adj.y,3))
+                        .arg("Yrr")
+                        .arg(fmt(adj.z, 3))
+                        .arg("Zlerr")
+                        .arg("3D error");
         }
         html += "</table>";
 
-        // ===== 4. RESIDUALS =====
+        html +="<br><br>";
         html += "<p style='font-size:12pt; font-weight:bold;'>4. Baseline Residuals</p>";
 
         html += "<table><tr>"
@@ -501,22 +227,6 @@ QString GenerateNetworkAdjustmentReport::buildHTML(const ProjectContext *ctx,
         }
 
         html += "</table>";
-
-        // ===== 5. STATS =====
-        html += "<p style='font-size:12pt; font-weight:bold;'>5. Adjustment Statistics</p>";
-
-        html += QString("<table>"
-                        "<tr><td>DOF</td><td>%1</td></tr>"
-                        "<tr><td>σ0</td><td>%2</td></tr>"
-                        "<tr><td>vTPv</td><td>%3</td></tr>"
-                        "<tr><td>RMS</td><td>%4 mm</td></tr>"
-                        "<tr><td>Chi-square</td><td>%5</td></tr>"
-                        "</table>")
-                    .arg(sr.dof)
-                    .arg(fmt(sr.sigma0,6))
-                    .arg(fmt(sr.chiSquareValue,4))
-                    .arg(fmt(sr.rms3D*1000,2))
-                    .arg(sr.chiSquarePassed ? "PASSED" : "FAILED");
 
         // ===== 6. PRECISION =====
         html += "<p style='font-size:12pt; font-weight:bold;'>6. Station Precisions</p>";

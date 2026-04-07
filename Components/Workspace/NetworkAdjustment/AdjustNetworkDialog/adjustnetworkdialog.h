@@ -39,6 +39,8 @@ private:
     QDoubleSpinBox *aPrioriSpin;
     QDoubleSpinBox *sigmaHSpin;
     QDoubleSpinBox *sigmaVSpin;
+    QDoubleSpinBox *antHeightErrorSpin;
+    QDoubleSpinBox *centeringErrorSpin;
     QPushButton *cancelBtn;
     QPushButton *adjustBtn;
 

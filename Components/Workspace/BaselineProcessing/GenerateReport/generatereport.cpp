@@ -275,7 +275,6 @@ void GenerateReport::savePDF(QString HTMLBody, const QString &_outPath)
         printer.setPageMargins(marginsMM, QPageLayout::Millimeter);
 
         QString headerHTML = R"(
-
         <table style="width:100%; border:none; margin-bottom:10px;">
           <tr>
             <td style="width:80px;">

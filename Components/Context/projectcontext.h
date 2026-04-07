@@ -135,6 +135,7 @@ struct SubnetworkResult {
     bool success = false;
     bool constrained = true;
     bool usedCovariance = true;
+    int iterations = 0;
 
     QMap<QString, Vector3d64> adjustedECEF;
     QMap<QString, Vector3d64> stationCorrections;
@@ -223,6 +224,8 @@ struct AdjustmentOptions {
     double aPrioriScalar = 1.0;
     double defaultSigmaH = 0.010;
     double defaultSigmaV = 0.020;
+    double antennaHeightError = 0.0030;
+    double centeringError = 0.0000;
     double xx;
     double xy;
     double xz;
