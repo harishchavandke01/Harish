@@ -9,13 +9,19 @@ extern "C" {
 
 /* Accumulator: stores only the normal equation (constant size) */
 typedef struct {
-    double *N;           /* normal matrix [np x np] row-major              */
-    double *c;           /* right-hand side [np]                           */
-    double  vtRv_phase;  /* accumulated v'R^{-1}v for phase obs            */
-    double  vtRv_code;   /* accumulated v'R^{-1}v for code obs             */
-    int     n_phase;     /* total phase DD observations                    */
-    int     n_code;      /* total code DD observations                     */
+    double *N;           /* normal matrix [np x np] row-major (fallback)   */
+    double *c;           /* right-hand side [np] (fallback)                */
+    double  vtRv_phase;  /* accumulated v'R^{-1}v for phase obs (fallback) */
+    double  vtRv_code;   /* accumulated v'R^{-1}v for code obs  (fallback) */
+    int     n_phase;     /* total phase DD observations (fallback)         */
+    int     n_code;      /* total code DD observations  (fallback)         */
     int     n_param;     /* number of parameters (= rtk->nx)               */
+
+    /* TBC-matching primary path: 3x3 baseline normal equations accumulated
+     * from fixed-solution post-fit residuals only (ambiguities eliminated). */
+    double  N_bb[9];        /* 3x3 baseline normal eq. N_bb, row-major     */
+    double  vtRv_fixed;     /* phase v'Diag(R)^{-1}v from fixed residuals  */
+    int     n_phase_fixed;  /* phase obs count from fixed epochs            */
 } BatchLS_t;
 
 typedef struct {
@@ -41,12 +47,22 @@ BatchLS_Session_t *batchls_session_create(int n_param);
 void  batchls_session_reset(BatchLS_Session_t *s);
 void  batchls_session_free (BatchLS_Session_t *s);
 
-/* Per-epoch accumulation with FULL R[nv x nv] col-major */
+/* Per-epoch accumulation with FULL R[nv x nv] col-major (legacy fallback) */
 int   batchls_accumulate(BatchLS_Session_t *s,
                        const double *H,    /* [nv x nx] row-major */
                        const double *v,    /* [nv] */
                        const double *R,    /* [nv x nv] col-major */
                        const int    *vflg, /* [nv] */
+                       int nv, int nx);
+
+/* Fast per-epoch accumulation using diagonal R — phase observations only.
+ * Call this with post-fit residuals from the FIXED solution (xa) to get
+ * the TBC-matching a posteriori baseline covariance. O(nv) per epoch. */
+int   batchls_accumulate_fixed(BatchLS_Session_t *s,
+                       const double *H,    /* [nx x nv] col-major (RTKLIB) */
+                       const double *v,    /* [nv]                         */
+                       const double *R,    /* [nv x nv] col-major          */
+                       const int    *vflg, /* [nv]                         */
                        int nv, int nx);
 
 int   batchls_solve   (BatchLS_Session_t *s);

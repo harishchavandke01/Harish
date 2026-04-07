@@ -33,10 +33,13 @@ void batchls_session_reset(BatchLS_Session_t *s)
     int np = s->acc.n_param;
     memset(s->acc.N, 0, (size_t)np * np * sizeof(double));
     memset(s->acc.c, 0, (size_t)np * sizeof(double));
-    s->acc.vtRv_phase = 0.0;
-    s->acc.vtRv_code  = 0.0;
-    s->acc.n_phase    = 0;
-    s->acc.n_code     = 0;
+    s->acc.vtRv_phase    = 0.0;
+    s->acc.vtRv_code     = 0.0;
+    s->acc.n_phase       = 0;
+    s->acc.n_code        = 0;
+    memset(s->acc.N_bb, 0, sizeof(s->acc.N_bb));
+    s->acc.vtRv_fixed    = 0.0;
+    s->acc.n_phase_fixed = 0;
     memset(s->result.Cxx, 0, (size_t)np * np * sizeof(double));
     memset(s->result.C_fixed, 0, 9 * sizeof(double));
     memset(s->result.x, 0, sizeof(s->result.x));
@@ -165,6 +168,65 @@ int batchls_accumulate(BatchLS_Session_t *s,
 }
 
 /* ================================================================
+ *  batchls_accumulate_fixed — fast 3x3 normal-equation accumulator
+ *
+ *  Called with the POST-FIT residuals from the FIXED solution (xa).
+ *  Only phase observations are used (code ignored).
+ *  Uses the diagonal of R as weights (avoids full matrix inversion).
+ *
+ *  This is O(nv) per epoch vs O(nv^3) for the full-R path.
+ *  The result matches TBC: C_fixed = sigma0^2 * N_bb^{-1} with
+ *  DOF = n_phase - 3 (integer ambiguities are eliminated, not
+ *  marginalized, so no Schur complement is needed).
+ *
+ *  H is [nx x nv] column-major (RTKLIB convention): element at
+ *  (param p, obs k) = H[p + k*nx], equivalently H[k*nx + p].
+ *  First 3 parameters (p=0,1,2) are the baseline dX/dY/dZ partials.
+ * ================================================================ */
+int batchls_accumulate_fixed(BatchLS_Session_t *s,
+                             const double *H, const double *v,
+                             const double *R, const int *vflg,
+                             int nv, int nx)
+{
+    if (!s || !H || !v || !R || nv <= 0) return -1;
+    BatchLS_t *b = &s->acc;
+    int i;
+
+    for (i = 0; i < nv; i++) {
+        /* Phase observations only: bit4 of vflg == 0 means phase */
+        if ((vflg[i] >> 4) & 1) continue;
+
+        /* Diagonal weight: w = 1 / R[i,i]  (R col-major: R[i + i*nv]) */
+        double Rii = R[i + (size_t)i * nv];
+        if (Rii <= 0.0) continue;
+        double w = 1.0 / Rii;
+
+        /* Baseline partials from first 3 columns of H.
+         * H col-major [nx x nv]: element (param p, obs i) = H[p + i*nx]
+         * which equals H[i*nx + p] — same address. */
+        double h0 = H[(size_t)i * nx + 0];
+        double h1 = H[(size_t)i * nx + 1];
+        double h2 = H[(size_t)i * nx + 2];
+
+        /* N_bb (row-major 3x3) += w * [h0,h1,h2]' * [h0,h1,h2] */
+        b->N_bb[0] += w * h0 * h0;
+        b->N_bb[1] += w * h0 * h1;
+        b->N_bb[2] += w * h0 * h2;
+        b->N_bb[3] += w * h1 * h0;
+        b->N_bb[4] += w * h1 * h1;
+        b->N_bb[5] += w * h1 * h2;
+        b->N_bb[6] += w * h2 * h0;
+        b->N_bb[7] += w * h2 * h1;
+        b->N_bb[8] += w * h2 * h2;
+
+        /* vtRv_fixed += w * v[i]^2 */
+        b->vtRv_fixed += w * v[i] * v[i];
+        b->n_phase_fixed++;
+    }
+    return 0;
+}
+
+/* ================================================================
  *  build_active_map — find non-zero diagonal columns in N
  * ================================================================ */
 static int build_active_map(const double *N, int np, int *col_map)
@@ -227,8 +289,54 @@ int batchls_solve(BatchLS_Session_t *s)
     int n_total = b->n_phase + b->n_code;
     int i, j, k;
 
-    res->n_obs   = n_total;
     res->n_param = np;
+    res->status  = -1;
+
+    /* =============================================================
+     * PRIMARY PATH — TBC-matching a posteriori baseline covariance
+     *
+     * N_bb is accumulated only from fixed-solution post-fit residuals
+     * (phase only, first 3 baseline parameters).  With integer
+     * ambiguities eliminated (not marginalized), DOF = n_phase - 3
+     * and no Schur complement is needed.
+     *
+     * C_fixed = sigma0^2 * N_bb^{-1}
+     * ============================================================= */
+    if (b->n_phase_fixed >= 4) {
+        int dof = b->n_phase_fixed - 3;
+        if (dof < 1) dof = 1;
+        double sigma0_sq = b->vtRv_fixed / (double)dof;
+
+        /* Convert N_bb row-major -> column-major for matinv */
+        double Nf_cm[9];
+        for (i = 0; i < 3; i++)
+            for (j = 0; j < 3; j++)
+                Nf_cm[i + j * 3] = b->N_bb[i * 3 + j];
+
+        if (matinv(Nf_cm, 3) != 0) {
+            res->status = -1;
+            return -1;
+        }
+
+        /* C_fixed = sigma0_sq * N_bb^{-1} (column-major, RTKLIB convention) */
+        for (i = 0; i < 9; i++)
+            res->C_fixed[i] = sigma0_sq * Nf_cm[i];
+
+        res->n_obs     = b->n_phase_fixed;
+        res->n_phase   = b->n_phase_fixed;
+        res->dof       = dof;
+        res->sigma0_sq = sigma0_sq;
+        res->sigma0    = sqrt(sigma0_sq);
+        res->status    = 0;
+        s->ready       = 1;
+        return 0;
+    }
+
+    /* =============================================================
+     * FALLBACK PATH — float normal equations (legacy)
+     * Used only when no fixed epochs were accumulated.
+     * ============================================================= */
+    res->n_obs   = n_total;
     res->n_phase = b->n_phase;
     res->status  = 0;
 
@@ -348,6 +456,14 @@ int batchls_fix_cov(BatchLS_Session_t *s)
     BatchLS_Result_t *res = &s->result;
     int np = res->n_param, i, j;
 
+    /* Primary path: C_fixed was already set in batchls_solve() from N_bb.
+     * No Schur complement needed — ambiguities were eliminated, not marginalized. */
+    if (s->acc.n_phase_fixed >= 4) {
+        s->ready = 1;
+        return 0;
+    }
+
+    /* Fallback (float path): apply Schur complement to marginalise ambiguities */
     int *amb = (int *)malloc(np * sizeof(int));
     if (!amb) return -1;
     int na = 0;

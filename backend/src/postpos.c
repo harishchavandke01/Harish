@@ -1637,7 +1637,7 @@ extern int postpos(gtime_t ts, gtime_t te, double ti, double tu,
       BatchLS_Session_t *_s = rtkpos_get_session();
       rtkpos_set_session(NULL);
 
-      if (_s != NULL && (_s->acc.n_phase + _s->acc.n_code) > 0) {
+      if (_s != NULL && (_s->acc.n_phase_fixed > 0 || _s->acc.n_phase + _s->acc.n_code > 0)) {
           int bstat = batchls_solve(_s);
           if (bstat == 0) {
               batchls_fix_cov(_s);
@@ -1704,8 +1704,8 @@ extern int postpos(gtime_t ts, gtime_t te, double ti, double tu,
                   fprintf(stderr, "========================================\n\n");
               }
           } else {
-              fprintf(stderr, "[batchls] solve failed: status=%d n_obs=%d\n",
-                      bstat, _s->acc.n_phase + _s->acc.n_code);
+              fprintf(stderr, "[batchls] solve failed: status=%d n_phase_fixed=%d n_obs=%d\n",
+                      bstat, _s->acc.n_phase_fixed, _s->acc.n_phase + _s->acc.n_code);
           }
       }
       batchls_session_free(_s);

@@ -1457,20 +1457,6 @@ static int ddres(rtk_t *rtk, const obsd_t *obs, double dt, const double *x,
     // }
 
     ddcov(nb,b,Ri,Rj,nv,R);
-    {
-        BatchLS_Session_t *_s = rtkpos_get_session();
-        if (_s != NULL && nv > 0) {
-            /* H is [nv x nx] row-major (each row = one DD obs)
-             * v is [nv]
-             * R is [nv x nv] column-major (from ddcov)
-             * vflg is [nv] with bit4: 0=phase, 1=code
-             *
-             * Pass the FULL R matrix — batchls_accumulate() will
-             * invert it and accumulate N += H' R^{-1} H per epoch.
-             */
-            batchls_accumulate(_s, H, v, R, vflg, nv, rtk->nx);
-        }
-    }
 
 
     free(Ri); free(Rj); free(im);
@@ -2178,7 +2164,15 @@ static int relpos(rtk_t *rtk, const obsd_t *obs, int nu, int nr,
             if (zdres(0,obs,nu,rs,dts,var,svh,nav,xa,opt,y,e,azel,freq)) {
 
                 /* post-fit residuals for fixed solution (xa includes fixed phase biases, rtk->xa does not) */
-                nv=ddres(rtk,obs,dt,xa,Pp,sat,y,e,azel,freq,iu,ir,ns,v,NULL,R,vflg);
+                nv=ddres(rtk,obs,dt,xa,Pp,sat,y,e,azel,freq,iu,ir,ns,v,H,R,vflg);
+
+                /* Accumulate 3x3 baseline normal equations for TBC-matching
+                 * a posteriori covariance (phase obs, diagonal-R weights). */
+                {
+                    BatchLS_Session_t *_bs = rtkpos_get_session();
+                    if (_bs != NULL && nv > 0)
+                        batchls_accumulate_fixed(_bs, H, v, R, vflg, nv, rtk->nx);
+                }
 
                 /* validation of fixed solution, always returns valid */
                 if (valpos(rtk,v,R,vflg,nv,4.0)) {
