@@ -372,7 +372,7 @@ void NetworkAdjustment::startNextSubnetJob()
     }
 
     QVector<ProjectBaseline> subBaselines;
-    for (int idx : targetInfo.baselineIndices) {
+    for (int &idx : targetInfo.baselineIndices) {
         if (idx >= 0 && idx < projectContext->baselines.size())
             subBaselines.append(projectContext->baselines[idx]);
     }

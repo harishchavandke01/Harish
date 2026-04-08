@@ -104,9 +104,9 @@ QString GenerateNetworkAdjustmentReport::buildHTML(const ProjectContext *ctx,
 
         //grid coords
         html += "<p style='font-size:12pt; font-weight:bold;'>Adjusted Grid Coordinates</p>";
-        html += "<table><tr>"
+        html += "<table style='border-collapse:collapse;'><tr>"
                 "<th>Station</th><th>Easting</th><th>Easting error</th><th>Northing</th>"
-                "<th>Northing error</th><th>EGM-08</th><th>EGM-08 error</th>"
+                "<th>Northing error</th><th>EGM-08</th><th>EGM-08<br>error</th>"
                 "</tr>";
 
         for (auto it = sr.stationCorrections.begin(); it != sr.stationCorrections.end(); ++it)
@@ -132,9 +132,9 @@ QString GenerateNetworkAdjustmentReport::buildHTML(const ProjectContext *ctx,
 
         //Geodetic coords
         html += "<p style='font-size:12pt; font-weight:bold;'>Adjusted Geodetic Coordinates</p>";
-        html += "<table><tr>"
+        html += "<table style='border-collapse:collapse;'><tr>"
                 "<th>Station</th><th>Latitude</th><th>Lat error</th><th>Longitude</th>"
-                "<th>Lon error</th><th>Ellipsoidal</th><th>Ellip. error</th>"
+                "<th>Lon error</th><th>Ellipsoidal</th><th>Ellipsoidal<br>error</th>"
                 "</tr>";
         for (auto it = sr.stationCorrections.begin(); it != sr.stationCorrections.end(); ++it)
         {
